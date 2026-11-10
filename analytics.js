@@ -13,7 +13,8 @@ st.textContent=`.an-list{display:flex;flex-wrap:wrap;gap:6px 16px;margin:8px 0 1
 .an-t{position:relative;flex:none}
 .an-b{position:absolute;top:5px;height:16px;border-radius:4px;color:#fff;font-size:11px;line-height:16px;padding:0 4px;overflow:hidden;white-space:nowrap}.an-b.done{opacity:.45}.an-row.proj .an-b{top:8px;height:10px;padding:0}
 .an-m{position:absolute;top:0;height:16px;border-left:1px solid var(--line);font-size:11px;padding-left:3px;color:var(--muted);white-space:nowrap}.an-d{position:absolute;top:18px;font-size:10px;color:var(--muted);width:20px;text-align:center}
-.an-today{position:absolute;top:0;bottom:0;width:2px;background:#e5484d;z-index:1;pointer-events:none}`;
+.an-today{position:absolute;top:0;bottom:0;width:2px;background:#e5484d;z-index:1;pointer-events:none}
+#pf_prev{width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:6px}`;
 document.head.appendChild(st);
 const off=()=>{try{return new Set(JSON.parse(LS('studioAnOff')||'[]'));}catch(e){return new Set();}};
 const setOff=s=>LS('studioAnOff',JSON.stringify([...s]));
@@ -69,10 +70,10 @@ function fit(g,s,w){
  while(s.length>1&&g.measureText(s+'…').width>w)s=s.slice(0,-1);
  return s+'…';
 }
-function drawPages(rows,from,to,title){
- const PW=842,PH=595,S=2.4,M=24,LW=190,TT=20,HH=28,RH2=15;
- const n=days(from,to)+1,cw=PW-2*M-LW,dw=cw/n,per=Math.floor((PH-2*M-TT-HH)/RH2),np=Math.max(1,Math.ceil(rows.length/per)),td=today(),out=[],x0=M+LW,top=M+TT;
- for(let pg=0;pg<np;pg++){
+function drawPages(rows,from,to,title,only,scale){
+ const PW=842,PH=595,S=scale||2.4,M=24,LW=190,TT=20,HH=28,RH2=15;
+ const n=days(from,to)+1,cw=PW-2*M-LW,dw=cw/n,per=Math.floor((PH-2*M-TT-HH)/RH2),np=Math.max(1,Math.ceil(rows.length/per)),td=today(),out=[],x0=M+LW,top=M+TT,lim=only?Math.min(np,only):np;
+ for(let pg=0;pg<lim;pg++){
   const cv=document.createElement('canvas');cv.width=Math.round(PW*S);cv.height=Math.round(PH*S);
   const g=cv.getContext('2d');g.scale(S,S);
   g.fillStyle='#fff';g.fillRect(0,0,PW,PH);
@@ -117,7 +118,7 @@ function drawPages(rows,from,to,title){
   out.push(cv.toDataURL('image/jpeg',0.92));
   cv.width=1;cv.height=1;
  }
- return {pages:out,PW:PW,PH:PH,W:Math.round(PW*S),H:Math.round(PH*S)};
+ return {pages:out,total:np,PW:PW,PH:PH,W:Math.round(PW*S),H:Math.round(PH*S)};
 }
 function pdfBlob(res){
  const enc=new TextEncoder(),chunks=[],offs=[];let len=0;
@@ -145,23 +146,50 @@ function download(blob,nm){
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nm;document.body.appendChild(a);a.click();
  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},5000);
 }
-function pdfForm(pids){
- if(!pids.length){toast('Выберите хотя бы один объект');return;}
- const ts=state.tasks.filter(t=>pids.indexOf(t.projectId)>=0);
- if(!ts.length){toast('Нет задач');return;}
- const mn=ts.reduce((a,t)=>t.start<a?t.start:a,ts[0].start),mx=ts.reduce((a,t)=>t.end>a?t.end:a,ts[0].end);
- showForm(`<h2>Ганг в PDF</h2><p class="notice">Объекты: ${esc(pids.map(projectName).join(', '))}</p><label>Период<select id="pf_mode"><option value="all">Всё сразу (${mn.slice(8)}.${mn.slice(5,7)}.${mn.slice(0,4)} – ${mx.slice(8)}.${mx.slice(5,7)}.${mx.slice(0,4)})</option><option value="range">Выбрать даты</option></select></label><div class="formgrid">${input('С','pf_from',mn,'date')}${input('По','pf_to',mx,'date')}</div><label class="check"><input type="checkbox" id="pf_kids" ${showKids()?'checked':''}>Включить подзадачи</label>`,async()=>{
-  let from=mn,to=mx;
-  if($('pf_mode').value==='range'){from=$('pf_from').value;to=$('pf_to').value;if(!from||!to||to<from)throw Error('Проверьте даты');}
-  const rows=buildRows(pids,$('pf_kids').checked,from,to);
+const ruD=d=>d.slice(8)+'.'+d.slice(5,7)+'.'+d.slice(0,4);
+function span(ps){
+ const ts=state.tasks.filter(t=>ps.indexOf(t.projectId)>=0);if(!ts.length)return null;
+ return {mn:ts.reduce((a,t)=>t.start<a?t.start:a,ts[0].start),mx:ts.reduce((a,t)=>t.end>a?t.end:a,ts[0].end)};
+}
+const titleOf=(ps,from,to)=>'Ганг: '+ps.map(projectName).join(', ')+' • '+ruD(from)+' – '+ruD(to);
+function pdfForm(pids0){
+ if(!state.projects.length){toast('Нет объектов');return;}
+ const sp0=span(pids0.length?pids0:state.projects.map(p=>p.id));
+ if(!sp0){toast('Нет задач');return;}
+ const chosen=()=>[...document.querySelectorAll('#editform input[name="pf_p"]:checked')].map(i=>i.value);
+ const range=ps=>{
+  const sp=span(ps);if(!sp)return null;
+  if($('pf_mode').value==='range'){const f=$('pf_from').value,t=$('pf_to').value;return (!f||!t||t<f)?null:{from:f,to:t,sp:sp};}
+  return {from:sp.mn,to:sp.mx,sp:sp};
+ };
+ showForm(`<h2>Ганг в PDF</h2><h3>Объекты</h3><div class="pick">${state.projects.map(p=>`<label class="check"><input type="checkbox" name="pf_p" value="${esc(p.id)}" ${pids0.indexOf(p.id)>=0?'checked':''}><span>${esc(p.name)}</span></label>`).join('')}</div><label>Период<select id="pf_mode"><option value="all">Всё сразу</option><option value="range">Выбрать даты</option></select></label><div class="formgrid">${input('С','pf_from',sp0.mn,'date')}${input('По','pf_to',sp0.mx,'date')}</div><label class="check"><input type="checkbox" id="pf_kids" ${showKids()?'checked':''}>Включить подзадачи</label><p class="notice" id="pf_info"></p><img id="pf_prev" alt="Предпросмотр первой страницы">`,async()=>{
+  const ps=chosen();if(!ps.length)throw Error('Выберите хотя бы один объект');
+  const r=range(ps);if(!r)throw Error('Проверьте даты');
+  const rows=buildRows(ps,$('pf_kids').checked,r.from,r.to);
   if(!rows.length)throw Error('В этом периоде нет задач');
-  await new Promise(r=>setTimeout(r,30));
-  const title='Ганг: '+pids.map(projectName).join(', ')+' • '+from.slice(8)+'.'+from.slice(5,7)+'.'+from.slice(0,4)+' – '+to.slice(8)+'.'+to.slice(5,7)+'.'+to.slice(0,4);
-  download(pdfBlob(drawPages(rows,from,to,title)),'gantt-'+today()+'.pdf');
+  await new Promise(x=>setTimeout(x,30));
+  download(pdfBlob(drawPages(rows,r.from,r.to,titleOf(ps,r.from,r.to))),'gantt-'+today()+'.pdf');
   $('dialog').close();toast('PDF сохранён');
  });
- const sync=()=>{const r=$('pf_mode').value==='range';$('pf_from').disabled=!r;$('pf_to').disabled=!r;};
- $('pf_mode').onchange=sync;sync();
+ let timer=0;
+ const prev=()=>{
+  const ps=chosen(),img=$('pf_prev'),info=$('pf_info');if(!img||!info)return;
+  const sp=span(ps),all=$('pf_mode').value==='all';
+  $('pf_from').disabled=all;$('pf_to').disabled=all;
+  if(!sp){info.textContent=ps.length?'У выбранных объектов нет задач':'Выберите хотя бы один объект';img.removeAttribute('src');return;}
+  $('pf_mode').options[0].textContent='Всё сразу ('+ruD(sp.mn)+' – '+ruD(sp.mx)+')';
+  if(all){$('pf_from').value=sp.mn;$('pf_to').value=sp.mx;}
+  const r=range(ps);
+  if(!r){info.textContent='Проверьте даты: «По» не может быть раньше «С»';img.removeAttribute('src');return;}
+  const rows=buildRows(ps,$('pf_kids').checked,r.from,r.to);
+  if(!rows.length){info.textContent='В этом периоде нет задач';img.removeAttribute('src');return;}
+  const res=drawPages(rows,r.from,r.to,titleOf(ps,r.from,r.to),1,1.3);
+  img.src=res.pages[0];
+  info.textContent='Так будет выглядеть первая страница. Страниц в файле: '+res.total+'. Строк: '+rows.length+'.';
+ };
+ const later=()=>{clearTimeout(timer);timer=setTimeout(prev,250);};
+ document.querySelectorAll('#editform [name="pf_p"],#pf_mode,#pf_from,#pf_to,#pf_kids').forEach(el=>{el.onchange=later;el.oninput=later;});
+ prev();
 }
 function addNav(){
  const nav=$('nav');if(!nav||!state||nav.querySelector('[data-view="analytics"]'))return;
