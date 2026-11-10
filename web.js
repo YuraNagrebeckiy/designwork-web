@@ -1,8 +1,8 @@
 'use strict';
 (function(){
-const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const reduced=false;
 const st=document.createElement('style');
-st.textContent='#cobweb{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:6;opacity:0;visibility:hidden;transition:opacity .8s}#cobweb.on{opacity:1;visibility:visible}#cobweb svg.w{position:absolute;left:0;top:0;width:100%;height:100%}#cobweb .th{fill:none;stroke:var(--muted);stroke-width:1;opacity:.5;stroke-linecap:round}#spider{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;opacity:0;filter:drop-shadow(0 0 1px rgba(255,255,255,.7))}#spider .lg{transform-origin:17px 17px;animation:spl .22s linear infinite alternate}@keyframes spl{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}@media(prefers-reduced-motion:reduce){#spider{display:none}}';
+st.textContent='#cobweb{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:6;opacity:0;visibility:hidden;transition:opacity .8s}#cobweb.on{opacity:1;visibility:visible}#cobweb svg.w{position:absolute;left:0;top:0;width:100%;height:100%}#cobweb .th{fill:none;stroke:var(--muted);stroke-width:1;opacity:.5;stroke-linecap:round}#spider{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;opacity:0;filter:drop-shadow(0 0 1px rgba(255,255,255,.7))}#spider .lg{transform-origin:17px 17px;animation:spl .22s linear infinite alternate}@keyframes spl{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}';
 document.head.appendChild(st);
 const box=document.createElement('div');box.id='cobweb';
 box.innerHTML=`<div id="webwrap"></div><div id="spider"><svg viewBox="0 0 34 34" width="34" height="34"><g class="lg" stroke="#2b2b2b" stroke-width="1.3" stroke-linecap="round" fill="none"><path d="M17 17 L6 9 M17 17 L4 14 M17 17 L4 20 M17 17 L6 26 M17 17 L28 9 M17 17 L30 14 M17 17 L30 20 M17 17 L28 26"/></g><ellipse cx="17" cy="19" rx="5" ry="6.5" fill="#2b2b2b"/><circle cx="17" cy="11.5" r="3.2" fill="#2b2b2b"/></svg></div>`;
