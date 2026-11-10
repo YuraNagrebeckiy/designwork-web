@@ -1,13 +1,13 @@
 'use strict';
 (function(){
-const DAY=28,N=window.studioNotify||{};
+const DAY=28,RH=34,BC=17,BB=28,N=window.studioNotify||{};
 const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){}return null;};
 if(statuses.indexOf('На согласовании')<0)statuses.splice(1,0,'На согласовании');
 let drag=null,suppress=false,gmin='',showAll=LS('studioShowAll')!=='off';
 let chatPid='',chatMsgs=[],chatTimer=null,chatFirst=true;
 const Q=[],idMap={};let busy=false;
 const st=document.createElement('style');
-st.textContent='#syncbadge{position:fixed;left:12px;bottom:12px;z-index:150;background:var(--ink);color:var(--panel);padding:6px 12px;border-radius:999px;font-size:13px;opacity:.92}.chk2{display:inline-flex;align-items:center;gap:8px;margin:0;color:var(--ink);font-size:14px}.chk2 input{width:22px;height:22px;min-height:0;margin:0}.gantt .bar.review{background:#9b6bd3}@media(min-width:761px){.board{grid-template-columns:repeat(4,minmax(200px,1fr))}}#chatbtn{position:fixed;right:16px;bottom:16px;z-index:140;width:54px;height:54px;border-radius:50%;font-size:24px;background:var(--accent);color:#fff;border:0;box-shadow:0 4px 18px #0005;padding:0}#chatbtn.dot::after{content:"";position:absolute;top:6px;right:6px;width:13px;height:13px;border-radius:50%;background:#e5484d;border:2px solid var(--panel)}#chatbox{position:fixed;right:16px;bottom:82px;z-index:141;width:min(390px,calc(100vw - 24px));height:min(540px,calc(100dvh - 120px));display:flex;flex-direction:column;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 36px #0006}#chatbox.hidden{display:none}.ch-head{display:flex;justify-content:space-between;align-items:center;padding:8px 8px 8px 14px;border-bottom:1px solid var(--line)}.ch-head button{border:0;background:none;min-height:36px;padding:4px 10px}#chList{flex:1;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}.ch-m{max-width:85%;background:var(--bg);border-radius:12px;padding:6px 10px;align-self:flex-start;overflow-wrap:anywhere;white-space:pre-wrap}.ch-m.me{align-self:flex-end;background:var(--soft)}.ch-m small{display:block;color:var(--muted);font-size:11px}.ch-e{align-self:center;text-align:center;font-size:12px;color:var(--muted);white-space:pre-wrap;max-width:95%;overflow-wrap:anywhere}#chForm{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}#chForm input{flex:1}#chForm button{min-width:48px}';
+st.textContent='#syncbadge{position:fixed;left:12px;bottom:12px;z-index:150;background:var(--ink);color:var(--panel);padding:6px 12px;border-radius:999px;font-size:13px;opacity:.92}.chk2{display:inline-flex;align-items:center;gap:8px;margin:0;color:var(--ink);font-size:14px}.chk2 input{width:22px;height:22px;min-height:0;margin:0}.gantt .bar.review{background:#9b6bd3}@media(min-width:761px){.board{grid-template-columns:repeat(4,minmax(200px,1fr))}}#chatbtn{position:fixed;right:16px;bottom:16px;z-index:140;width:54px;height:54px;border-radius:50%;font-size:24px;background:var(--accent);color:#fff;border:0;box-shadow:0 4px 18px #0005;padding:0}#chatbtn.dot::after{content:"";position:absolute;top:6px;right:6px;width:13px;height:13px;border-radius:50%;background:#e5484d;border:2px solid var(--panel)}#chatbox{position:fixed;right:16px;bottom:82px;z-index:141;width:min(390px,calc(100vw - 24px));height:min(540px,calc(100dvh - 120px));display:flex;flex-direction:column;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 36px #0006}#chatbox.hidden{display:none}.ch-head{display:flex;justify-content:space-between;align-items:center;padding:8px 8px 8px 14px;border-bottom:1px solid var(--line)}.ch-head button{border:0;background:none;min-height:36px;padding:4px 10px}#chList{flex:1;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}.ch-m{max-width:85%;background:var(--bg);border-radius:12px;padding:6px 10px;align-self:flex-start;overflow-wrap:anywhere;white-space:pre-wrap}.ch-m.me{align-self:flex-end;background:var(--soft)}.ch-m small{display:block;color:var(--muted);font-size:11px}.ch-e{align-self:center;text-align:center;font-size:12px;color:var(--muted);white-space:pre-wrap;max-width:95%;overflow-wrap:anywhere}#chForm{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}#chForm input{flex:1}#chForm button{min-width:48px}.gantt .grow{height:'+RH+'px!important;min-height:'+RH+'px!important}.gantt .grow.ghead{height:36px!important;min-height:36px!important}.gantt .glabel{display:flex!important;align-items:center;gap:6px;height:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px!important;line-height:1.1}.gantt .glabel small{display:inline!important;font-size:11px!important;opacity:.65;overflow:hidden;text-overflow:ellipsis}.gantt .track{height:'+RH+'px!important}.gantt .ghead .track{height:36px!important}.gantt .bar{height:22px!important;top:6px!important;line-height:20px!important;font-size:12px!important;min-height:0!important;padding-top:0!important;padding-bottom:0!important}.gantt .day{font-size:10px!important;line-height:1.1!important}.gantt .depsvg{top:36px!important}.tnote{margin:2px 0 4px;font-size:12px;color:var(--muted);white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;cursor:pointer;overflow-wrap:anywhere}.tnote.open{display:block}#f_note{min-height:72px;font-size:16px;width:100%}';
 document.head.appendChild(st);
 const badge=document.createElement('div');badge.id='syncbadge';badge.textContent='Сохранение…';badge.style.display='none';document.body.appendChild(badge);
 function setBadge(on){badge.style.display=on?'block':'none';}
@@ -26,6 +26,7 @@ function patchUpdate(p){
  ['title','start','end','assigneeId','lag'].forEach(k=>{if(p[k]!==undefined)t[k]=String(p[k]);});
  if(p.calendarEnabled!==undefined)t.calendarEnabled=String(!!p.calendarEnabled);
  if(p.approval!==undefined)t.approval=String(!!p.approval);
+ if(p.note!==undefined)t.note=String(p.note);
  if(p.deps!==undefined)t.deps=JSON.stringify(p.deps);
  if(p.projectId!==undefined&&p.projectId!==t.projectId){kids(t.id).concat([t]).forEach(x=>{x.projectId=p.projectId;});t.parentId='';}
  if(p.parentId!==undefined)t.parentId=String(p.parentId||'');
@@ -41,7 +42,7 @@ function patchDelete(p){
 }
 function patchCreate(p){
  const mgr=manage(p.projectId);
- const t={id:'tmp-'+Math.random().toString(36).slice(2,10),projectId:p.projectId,parentId:p.parentId||'',title:p.title||'',assigneeId:mgr?(p.assigneeId||''):state.me.id,start:p.start,end:p.end,status:'В работе',deps:JSON.stringify(mgr?(p.deps||[]):[]),lag:String(mgr?(p.lag||0):0),calendarEnabled:String(!!p.calendarEnabled),approval:String(mgr&&!!p.approval),dirty:'true',syncError:'',version:'1',updatedAt:'',deleted:'false'};
+ const t={id:'tmp-'+Math.random().toString(36).slice(2,10),projectId:p.projectId,parentId:p.parentId||'',title:p.title||'',assigneeId:mgr?(p.assigneeId||''):state.me.id,start:p.start,end:p.end,status:'В работе',deps:JSON.stringify(mgr?(p.deps||[]):[]),lag:String(mgr?(p.lag||0):0),calendarEnabled:String(!!p.calendarEnabled),approval:String(mgr&&!!p.approval),note:String(p.note||''),dirty:'true',syncError:'',version:'1',updatedAt:'',deleted:'false'};
  state.tasks.push(t);cascadeLocal();return t.id;
 }
 function remap(p){let s=JSON.stringify(p);Object.keys(idMap).forEach(k=>{s=s.split(k).join(idMap[k]);});return JSON.parse(s);}
@@ -60,8 +61,12 @@ async function pump(){
 call=function(action,payload){
  if(!state||['taskCreate','taskUpdate','taskDelete'].indexOf(action)<0)return origCall.apply(this,arguments);
  payload=payload||{};
- const ap=$('f_approval');
- if(ap&&$('dialog').open&&action!=='taskDelete')payload=Object.assign({},payload,{approval:ap.checked});
+ if(action!=='taskDelete'&&$('dialog').open){
+  const ap=$('f_approval'),nt=$('f_note'),ex={};
+  if(ap)ex.approval=ap.checked;
+  if(nt)ex.note=nt.value;
+  payload=Object.assign({},payload,ex);
+ }
  if(action==='taskUpdate'&&payload.status==='Готово'){const cur=T(payload.id);if(cur&&cur.approval==='true'&&cur.status!=='Готово'&&!manage(cur.projectId)){payload=Object.assign({},payload,{status:'На согласовании'});toast('Отправлено на согласование руководителю');}}
  if(action!=='taskDelete'){const cur=action==='taskUpdate'?T(payload.id):null,s=payload.start!==undefined?payload.start:(cur&&cur.start),e=payload.end!==undefined?payload.end:(cur&&cur.end);if(s&&e&&e<s)return Promise.reject(Error('Дедлайн раньше старта'));}
  let tmp='';
@@ -76,12 +81,19 @@ window.addEventListener('beforeunload',e=>{if(busy||Q.length){e.preventDefault()
 const oTaskForm=taskForm;
 taskForm=function(t,parent,pre){
  oTaskForm.apply(this,arguments);
- if(!$('dialog').open||!$('f_assignee')||$('f_approval'))return;
+ if(!$('dialog').open||!($('f_title')||$('f_status'))||$('f_note'))return;
  const foot=$('editform').querySelector('.footer');if(!foot)return;
- const l=document.createElement('label');l.className='check';
- l.innerHTML='<input type="checkbox" id="f_approval"> Требует согласования: исполнитель ставит «На согласовании», «Готово» ставит руководитель';
- l.firstChild.checked=!!t&&t.approval==='true';
- foot.parentNode.insertBefore(l,foot);
+ const ref=$('editform').querySelector('[data-action="taskDelete"]')||foot;
+ const n=document.createElement('label');
+ n.innerHTML='Описание<textarea id="f_note" maxlength="2000" rows="3" placeholder="Что нужно сделать, ссылки, размеры…"></textarea>';
+ n.lastChild.value=(t&&t.note)||'';
+ ref.parentNode.insertBefore(n,ref);
+ if($('f_assignee')&&!$('f_approval')){
+  const l=document.createElement('label');l.className='check';
+  l.innerHTML='<input type="checkbox" id="f_approval"> Требует согласования: исполнитель ставит «На согласовании», «Готово» ставит руководитель';
+  l.firstChild.checked=!!t&&t.approval==='true';
+  ref.parentNode.insertBefore(l,ref);
+ }
 };
 const menu=$('menu');
 const teamBtn=document.createElement('button');teamBtn.type='button';teamBtn.textContent='Команда';teamBtn.classList.add('hidden');
@@ -141,6 +153,7 @@ function post(){
  document.querySelectorAll('#content .card[data-drag]').forEach(c=>{
   const t=state.tasks.find(x=>x.id===c.dataset.drag);if(!t)return;
   if(isDim(t))c.classList.add('dim');
+  if(t.note){const m=c.querySelector('.meta'),np=document.createElement('p');np.className='tnote';np.textContent=t.note;np.onclick=()=>np.classList.toggle('open');if(m)m.after(np);}
   const wait=t.assigneeId===state.me.id&&t.status!=='Готово'?arr(t.deps).map(i=>state.tasks.find(x=>x.id===i)).filter(x=>x&&x.status!=='Готово'):[];
   if(wait.length){const p=document.createElement('p'),a=c.querySelector('.actions');p.className='notice';p.textContent='Ожидает: '+wait.map(x=>x.title+(x.status==='На согласовании'?' (на согласовании)':'')).join(', ');if(a)c.insertBefore(p,a);}
  });
@@ -167,13 +180,13 @@ renderGantt=function(id){
  let ticks='';for(let i=0;i<n;i++){if(n>1500&&i%7)continue;const d=plus(min,i);ticks+=`<span class="day" style="left:${i*DAY}px">${d.slice(8)}<br>${d.slice(5,7)}</span>`;}
  let paths='';
  shown.forEach((t,i)=>{
-  arr(t.deps).forEach(did=>{const j=shown.findIndex(x=>x.id===did);if(j<0)return;const x1=(days(min,shown[j].end)+1)*DAY,x2=days(min,t.start)*DAY,y1=j*58+29,y2=i*58+29,gap=days(shown[j].end,t.start)-1;paths+=`<path d="M ${x1} ${y1} H ${x1+8} V ${y2} H ${x2}" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)"/>`;if(gap>0)paths+=`<text x="${x1+10}" y="${y2-4}" font-size="10" fill="var(--muted)">+${gap} д</text>`;});
-  if(t.parentId){const j=shown.findIndex(x=>x.id===t.parentId);if(j>=0&&j<i){const px=days(min,shown[j].start)*DAY+6,cx=days(min,t.start)*DAY,y1=j*58+43,y2=i*58+29;paths+=`<path d="M ${px} ${y1} V ${y2} H ${Math.max(cx,px+10)}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow2)"/>`;}}
+  arr(t.deps).forEach(did=>{const j=shown.findIndex(x=>x.id===did);if(j<0)return;const x1=(days(min,shown[j].end)+1)*DAY,x2=days(min,t.start)*DAY,y1=j*RH+BC,y2=i*RH+BC,gap=days(shown[j].end,t.start)-1;paths+=`<path d="M ${x1} ${y1} H ${x1+8} V ${y2} H ${x2}" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)"/>`;if(gap>0)paths+=`<text x="${x1+10}" y="${y2-4}" font-size="10" fill="var(--muted)">+${gap} д</text>`;});
+  if(t.parentId){const j=shown.findIndex(x=>x.id===t.parentId);if(j>=0&&j<i){const px=days(min,shown[j].start)*DAY+6,cx=days(min,t.start)*DAY,y1=j*RH+BB,y2=i*RH+BC;paths+=`<path d="M ${px} ${y1} V ${y2} H ${Math.max(cx,px+10)}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow2)"/>`;}}
  });
  const labelWidth=matchMedia('(max-width:760px)').matches?160:230;
  const body=shown.map((t,i)=>{const ed=fullEdit(t),dim=isDim(t),cls=t.status==='Готово'?'done':t.status==='Пауза'?'pause':t.status==='На согласовании'?'review':'';
-  return `<div class="grow${dim?' dim':''}"><div class="glabel" style="padding-left:${12+rows[i].d*14}px" title="${esc(t.title)}">${rows[i].d?'↳ ':''}${esc(t.title)}<small>${esc(name(t.assigneeId))}</small></div><div class="track" style="width:${w}px"><button class="bar ${cls}${dim?' dim':''}" ${ed?'data-edit="1"':''} style="left:${days(min,t.start)*DAY}px;width:${(days(t.start,t.end)+1)*DAY}px" data-action="taskEdit" data-id="${esc(t.id)}" title="${esc(t.start+' — '+t.end+' • '+t.title+' • '+t.status)}">${ed?'<i class="hd l" data-h="l"></i>':''}<span class="bt">${esc(t.title)}</span>${ed?'<i class="hd r" data-h="r"></i>':''}</button></div></div>`;}).join('');
- $('ganttRoot').innerHTML=`<div class="gantt-scroll"><div class="gantt" style="width:${w+labelWidth}px"><div class="grow ghead"><div class="glabel">Этап / исполнитель</div><div class="track" style="width:${w}px">${ticks}</div></div>${body}<svg class="depsvg" width="${w}" height="${shown.length*58}" aria-hidden="true"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)"/></marker><marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/></marker></defs>${paths}</svg>${today()>=min&&today()<=max?`<div class="todayline" style="left:${labelWidth+days(min,today())*DAY}px"></div>`:''}</div></div><p class="notice">${esc(min)} — ${esc(max)}. Прокрутка по горизонтали. Сплошная стрелка — зависимость (окончание → старт), пунктирная — подзадача родительской задачи. Фиолетовая полоса — на согласовании. Перетащите полосу — перенос, края — длительность. ${ts.length>500?'Отображены первые 500 строк.':''}</p>`;
+  return `<div class="grow${dim?' dim':''}"><div class="glabel" style="padding-left:${12+rows[i].d*14}px" title="${esc(t.title)}">${rows[i].d?'↳ ':''}${esc(t.title)}<small>${esc(name(t.assigneeId))}</small></div><div class="track" style="width:${w}px"><button class="bar ${cls}${dim?' dim':''}" ${ed?'data-edit="1"':''} style="left:${days(min,t.start)*DAY}px;width:${(days(t.start,t.end)+1)*DAY}px" data-action="taskEdit" data-id="${esc(t.id)}" title="${esc(t.start+' — '+t.end+' • '+t.title+' • '+t.status+(t.note?' • '+String(t.note).slice(0,200):''))}">${ed?'<i class="hd l" data-h="l"></i>':''}<span class="bt">${esc(t.title)}</span>${ed?'<i class="hd r" data-h="r"></i>':''}</button></div></div>`;}).join('');
+ $('ganttRoot').innerHTML=`<div class="gantt-scroll"><div class="gantt" style="width:${w+labelWidth}px"><div class="grow ghead"><div class="glabel">Этап / исполнитель</div><div class="track" style="width:${w}px">${ticks}</div></div>${body}<svg class="depsvg" width="${w}" height="${shown.length*RH}" aria-hidden="true"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)"/></marker><marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/></marker></defs>${paths}</svg>${today()>=min&&today()<=max?`<div class="todayline" style="left:${labelWidth+days(min,today())*DAY}px"></div>`:''}</div></div><p class="notice">${esc(min)} — ${esc(max)}. Прокрутка по горизонтали. Сплошная стрелка — зависимость (окончание → старт), пунктирная — подзадача родительской задачи. Фиолетовая полоса — на согласовании. Перетащите полосу — перенос, края — длительность. ${ts.length>500?'Отображены первые 500 строк.':''}</p>`;
 };
 document.addEventListener('pointerdown',e=>{
  const bar=e.target.closest&&e.target.closest('.bar[data-edit]');if(!bar||e.button>0)return;
