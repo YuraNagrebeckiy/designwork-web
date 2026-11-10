@@ -1,0 +1,1 @@
+.row{display:flex;align-items:flex-start;gap:10px}.chk{display:inline-flex;margin:2px 0 0;flex:none}.chk input{width:24px;height:24px;min-height:0;padding:0;margin:0}.card h3.done{text-decoration:line-through;color:var(--muted)}.card select{width:auto;max-width:100%;min-height:38px;padding:4px 8px}.tree{max-width:860px}
