@@ -3,12 +3,12 @@ window.STUDIO_API = 'https://script.google.com/macros/s/AKfycbyS2UbVSa_ZYzQ5jf1Z
 
 // Дополнительные модули интерфейса по очереди: features.js (график, меню, быстрое сохранение, чат),
 // members.js (участники, типы проектов, карточки), touch.js (управление полосами на телефоне),
-// analytics.js (Аналитика, PDF, Esc, нажатие вне окна, тип ОКН), work.js (просрочка, часы, исполнители, права),
-// plan.js (график моих задач, предшественники следом).
+// analytics.js (Аналитика, PDF, Esc), work.js (просрочка, часы, исполнители, права), plan.js (график задач, цвета по сроку),
+// fire.js (огонь), cal.js (выходные, праздники, отпуска), ins.js (вставка задач, ввод отпусков), obj.js (объект на карточках).
 // Параметр меняется каждые 5 минут, чтобы браузер брал свежую версию.
 window.addEventListener('load', function () {
   var v = Math.floor(Date.now() / 300000);
-  var files = ['features.js', 'members.js', 'touch.js', 'analytics.js', 'work.js', 'plan.js'];
+  var files = ['features.js', 'members.js', 'touch.js', 'analytics.js', 'work.js', 'plan.js', 'fire.js', 'cal.js', 'ins.js', 'obj.js'];
   (function next(i) {
     if (i >= files.length) return;
     var s = document.createElement('script');
