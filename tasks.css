@@ -1,1 +1,5 @@
 .row{display:flex;align-items:flex-start;gap:10px}.chk{display:inline-flex;margin:2px 0 0;flex:none}.chk input{width:24px;height:24px;min-height:0;padding:0;margin:0}.card h3.done{text-decoration:line-through;color:var(--muted)}.card select{width:auto;max-width:100%;min-height:38px;padding:4px 8px}.tree{max-width:860px}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+input,select,textarea{font-size:16px}
+.bar .hd{position:absolute;top:0;bottom:0;width:12px;display:block;cursor:ew-resize;touch-action:none}.bar .hd.l{left:0}.bar .hd.r{right:0}.bar .bt{display:block;padding:0 10px;overflow:hidden;text-overflow:ellipsis;pointer-events:none}.bar[data-edit]{cursor:grab;touch-action:none}.bar[data-edit]:active{cursor:grabbing}
+.gantt .bar.dim{background:#b9bec9;color:#4b5160}.grow.dim .glabel{color:var(--muted)}.grow.dim .glabel small{opacity:.8}.card.dim{opacity:.55;filter:grayscale(1)}
