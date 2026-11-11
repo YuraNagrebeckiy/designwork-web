@@ -106,7 +106,7 @@ async function addTpl(){
  try{
   for(const x of BT){
    const s=prev?plus(prev.end,1):today(),e=plus(s,x[1]-1);
-   const id=await call('taskCreate',{projectId:pid,title:x[0],start:s,end:e,assigneeId:'',deps:prev?[prev.id]:[],lag:0});
+   const id=await call('taskCreate',{projectId:pid,title:x[0],start:s,end:e,assigneeId:'',deps:prev?[prev.id]:[],lag:0,kind:'stage'});
    prev={id:id,end:e};
   }
  }catch(err){toast(err.message||String(err));}
