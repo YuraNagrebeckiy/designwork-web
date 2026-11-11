@@ -1,8 +1,11 @@
 'use strict';
 (function(){
 const st=document.createElement('style');
-st.textContent=`.sectabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
-#content .sectabs button{border-radius:999px;padding:6px 16px}
+st.textContent=`.sectabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.sg-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.sg-top b{font-size:13px;min-width:38px}
+.sg-top .prog{flex:1;margin:0}
+#content .sectabs button{width:100%;border-radius:999px;padding:6px 8px;font-size:13px}
 #content .sectabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 html[data-theme=dark] #content .sectabs button.on{color:#15171d}
 .supplybox{border:1px dashed var(--line);border-radius:12px;padding:22px;color:var(--muted)}
@@ -20,13 +23,18 @@ window.secFilter=ts=>{
  if(!state||view!=='projects'||!projectId)return ts;
  return sec==='supply'?[]:ts.filter(t=>secOf(t)===sec);
 };
+window.secGo=function(pid,s){
+ view='projects';projectId=pid;lastPid=pid;sec=s;
+ render();
+};
 
 function decorate(){
  if(!state||view!=='projects'||!projectId)return;
  const c=document.getElementById('content'),tb=c&&c.querySelector('.toolbar');
  if(!c||!tb)return;
  if(!c.querySelector('.sectabs')){
-  tb.insertAdjacentHTML('afterend',`<div class='sectabs'>${SEC.map(s=>`<button type='button' data-sec='${s[0]}' class='${s[0]===sec?'on':''}'>${s[1]}</button>`).join('')}</div>`);
+  const S=window.secStats?window.secStats(projectId):null;
+  tb.insertAdjacentHTML('afterend',`<div class='sectabs'>${SEC.map(s=>{const n=S?S[s[0]]:0;return `<div class='sg'><div class='sg-top'><b>${n}%</b><div class='prog'><i style='width:${n}%'></i></div></div><button type='button' data-sec='${s[0]}' class='${s[0]===sec?'on':''}'>${s[1]}</button></div>`;}).join('')}</div>`);
  }
  const pe=c.querySelector('[data-action=projectEdit]');
  if(pe&&!pe.classList.contains('ico')){

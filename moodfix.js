@@ -4,7 +4,7 @@ function fix(){
  if(!state)return;
  const m=document.querySelector('#content [data-mood]'),b=document.querySelector('#content [data-board]');
  if(m&&m.textContent.indexOf('Мудборд')===0)m.textContent=m.textContent.replace('Мудборд','Файлы мудборда');
- if(b){
+ if(b&&!b.classList.contains('ico')){
   if(b.textContent!=='Мудборд')b.textContent='Мудборд';
   if(!b.classList.contains('primary'))b.classList.add('primary');
  }
