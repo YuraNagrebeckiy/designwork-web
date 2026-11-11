@@ -37,7 +37,10 @@ function decorate(){
  }
  if(sec==='supply'){
   const g=document.getElementById('ganttRoot');
-  if(g)g.innerHTML=`<div class='supplybox'><h3>Комплектация</h3><p>Здесь будет учёт закупок и смет: позиции, компании в тендере, сметы, суммы и итоги. Раздел в разработке.</p></div>`;
+  if(g){
+   if(window.renderSupply)window.renderSupply(g,projectId);
+   else g.innerHTML=`<div class='supplybox'><h3>Комплектация</h3><p>Раздел загружается…</p></div>`;
+  }
   const tr=c.querySelector('.tree');
   if(tr)tr.innerHTML='';
  }
