@@ -68,7 +68,7 @@ function drawMy(){
  const box=document.createElement('details');box.className='mygantt';box.open=LS('studioMyG')!=='off';
  box.addEventListener('toggle',()=>LS('studioMyG',box.open?'on':'off'));
  if(!ts.length){box.innerHTML='<summary>График задач</summary><p class="notice">Невыполненных задач нет.</p>';tb.after(box);return;}
- const DAY=28,min=plus(ts.reduce((a,t)=>t.start<a?t.start:a,ts[0].start),-1),mx=plus(ts.reduce((a,t)=>t.end>a?t.end:a,ts[0].end),2),n=days(min,mx)+1,w=n*DAY,lw=matchMedia('(max-width:760px)').matches?160:230;
+ const DAY=28,td0=today(),lo0=ts.reduce((a,t)=>t.start<a?t.start:a,ts[0].start),hi0=ts.reduce((a,t)=>t.end>a?t.end:a,ts[0].end),min=plus(lo0<plus(td0,-3)?lo0:plus(td0,-3),-1),mx=plus(hi0>plus(td0,24)?hi0:plus(td0,24),2),n=days(min,mx)+1,w=n*DAY,lw=matchMedia('(max-width:760px)').matches?160:230;
  let ticks='',mon='';
  for(let i=0;i<n;i++){
   const d=plus(min,i);
@@ -82,6 +82,8 @@ function drawMy(){
  const td=today(),tl=td>=min&&td<=mx?'<div class="todayline" style="left:'+(lw+days(min,td)*DAY)+'px"></div>':'';
  box.innerHTML='<summary>График задач ('+ts.length+')</summary><div class="gantt-scroll"><div class="gantt" style="width:'+(w+lw)+'px"><div class="grow ghead"><div class="glabel">Задача / объект</div><div class="track" style="width:'+w+'px">'+ticks+mon+'</div></div>'+body+tl+'</div></div>';
  tb.after(box);
+ const sc=box.querySelector('.gantt-scroll');
+ if(sc)sc.scrollLeft=Math.max(0,days(min,td0)*DAY-80);
 }
 const oRender=render;
 render=function(){const r=oRender.apply(this,arguments);try{drawMy();paintDeadlines();}catch(e){}return r;};

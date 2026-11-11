@@ -7,7 +7,13 @@ document.head.appendChild(st);
 const box=document.createElement('div');box.id='cobweb';
 box.innerHTML=`<div id="webwrap"></div><div id="spider"><svg viewBox="0 0 34 34" width="34" height="34"><g class="lg" stroke="#2b2b2b" stroke-width="1.3" stroke-linecap="round" fill="none"><path d="M17 17 L6 9 M17 17 L4 14 M17 17 L4 20 M17 17 L6 26 M17 17 L28 9 M17 17 L30 14 M17 17 L30 20 M17 17 L28 26"/></g><ellipse cx="17" cy="19" rx="5" ry="6.5" fill="#2b2b2b"/><circle cx="17" cy="11.5" r="3.2" fill="#2b2b2b"/></svg></div>`;
 document.body.appendChild(box);
-let web=null,crawlTimer=0,first=true;
+let web=null,crawlTimer=0,first=true,synced=false;
+const oCall=call;
+call=function(action){
+ const r=oCall.apply(this,arguments);
+ if(action==='state'&&r&&r.then)r.then(()=>{setTimeout(()=>{synced=true;try{update();}catch(e){}},1500);}).catch(()=>{});
+ return r;
+};
 function build(){
  const W=innerWidth,H=innerHeight,cx=W*0.64,cy=H*0.34,R=Math.hypot(Math.max(cx,W-cx),Math.max(cy,H-cy))+40,N=15,ang=[];
  for(let i=0;i<N;i++)ang.push(i*2*Math.PI/N+0.2+Math.sin(i*7.3)*0.06);
@@ -46,7 +52,8 @@ function crawl(){
  an.oncancel=()=>{sp.style.opacity=0;};
 }
 function noTasksToday(){
- if(!state||state.me.role==='observer')return false;
+ if(!state){synced=false;return false;}
+ if(!synced||state.me.role==='observer')return false;
  const td=today();
  return !state.tasks.some(t=>t.assigneeId===state.me.id&&t.status!=='Готово'&&t.start<=td);
 }
