@@ -5,7 +5,7 @@ st.textContent=`.gantt .grow:not(.ghead) .track{cursor:cell}.ghint{margin:6px 0 
 document.head.appendChild(st);
 
 function minDate(){
- const ts=state.tasks.filter(t=>t.projectId===projectId);
+ const all=state.tasks.filter(t=>t.projectId===projectId),ts=window.secFilter?window.secFilter(all):all;
  if(!ts.length)return '';
  return plus(ts.reduce((a,t)=>t.start<a?t.start:a,ts[0].start),-1);
 }
