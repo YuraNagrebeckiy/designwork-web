@@ -15,12 +15,23 @@ document.head.appendChild(st);
 const byId=()=>new Map(state.tasks.map(t=>[t.id,t]));
 function kindOf(t,by){
  by=by||byId();
- if(t.kind)return t.kind;
+ const k=t.kind;
+ if(k==='stage'||k==='task'||k==='sub')return k;
  let d=0,c=t;
  while(c&&c.parentId&&d<10){c=by.get(c.parentId);d++;}
  return d===0?'stage':d===1?'task':'sub';
 }
 window.kindOf=kindOf;
+
+const calOff=d=>!!(window.studioCal&&window.studioCal.kind(d));
+function workStart(d,uid){
+ const vs=(state.vacations&&state.vacations[uid])||[];
+ for(let i=0;i<400;i++){
+  if(!calOff(d)&&!vs.some(v=>d>=v.from&&d<=v.to))return d;
+  d=plus(d,1);
+ }
+ return d;
+}
 
 function ctx(ts,touched){
  const by=new Map(ts.map(t=>[t.id,t])),ch=new Map();
@@ -28,6 +39,19 @@ function ctx(ts,touched){
  const desc=id=>{const o=[],q=[id];while(q.length){const c=q.shift();(ch.get(c)||[]).forEach(x=>{o.push(x);q.push(x.id);});}return o;};
  const shift=(t,d)=>{if(!d)return;[t].concat(desc(t.id)).forEach(x=>{x.start=plus(x.start,d);x.end=plus(x.end,d);touched.add(x.id);});};
  return {by:by,ch:ch,shift:shift};
+}
+function settle(ts,touched,c,all){
+ for(let it=0;it<200;it++){
+  let chg=false;
+  ts.forEach(x=>arr(x.deps).forEach(did=>{const y=c.by.get(did);if(!y)return;const s=plus(y.end,1+Number(x.lag||0));if(s>x.start){c.shift(x,days(x.start,s));chg=true;}}));
+  ts.forEach(x=>{const p=x.parentId?c.by.get(x.parentId):null;if(!p)return;if(x.start<p.start){p.start=x.start;touched.add(p.id);chg=true;}if(x.end>p.end){p.end=x.end;touched.add(p.id);chg=true;}});
+  const sg=ts.filter(x=>!x.parentId&&kindOf(x,all)==='stage').sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
+  for(let i=1;i<sg.length;i++){
+   const a=sg[i-1],b=sg[i];
+   if(b.start<=a.end&&(touched.has(a.id)||touched.has(b.id))){c.shift(b,days(b.start,workStart(plus(a.end,1),b.assigneeId)));chg=true;}
+  }
+  if(!chg)break;
+ }
 }
 function localEdit(id,ns,ne){
  const t=state.tasks.find(x=>x.id===id);
@@ -48,14 +72,13 @@ function localEdit(id,ns,ne){
    });
   }
  }
- for(let it=0;it<200;it++){
-  let chg=false;
-  ts.forEach(x=>arr(x.deps).forEach(did=>{const y=c.by.get(did);if(!y)return;const s=plus(y.end,1+Number(x.lag||0));if(s>x.start){c.shift(x,days(x.start,s));chg=true;}}));
-  ts.forEach(x=>{const p=x.parentId?c.by.get(x.parentId):null;if(!p)return;if(x.start<p.start){p.start=x.start;touched.add(p.id);chg=true;}if(x.end>p.end){p.end=x.end;touched.add(p.id);chg=true;}});
-  const sg=ts.filter(x=>!x.parentId&&kindOf(x,all)==='stage').sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
-  for(let i=1;i<sg.length;i++){const a=sg[i-1],b=sg[i];if(b.start<=a.end&&(touched.has(a.id)||touched.has(b.id))){c.shift(b,days(b.start,plus(a.end,1)));chg=true;}}
-  if(!chg)break;
- }
+ settle(ts,touched,c,all);
+}
+function localAfterCreate(id){
+ const t=state.tasks.find(x=>x.id===id);
+ if(!t)return;
+ const ts=state.tasks.filter(x=>x.projectId===t.projectId),touched=new Set([id]),c=ctx(ts,touched);
+ settle(ts,touched,c,byId());
 }
 
 const prevCall=call;
@@ -78,7 +101,10 @@ call=function(action,payload){
  }
  const r=prevCall.call(this,action,payload);
  if(action==='taskCreate'&&payload.kind&&state){
-  Promise.resolve(r).then(id=>{const t=state&&state.tasks.find(x=>x.id===id);if(t)t.kind=payload.kind;}).catch(()=>{});
+  Promise.resolve(r).then(id=>{
+   const t=state&&state.tasks.find(x=>x.id===id);
+   if(t){t.kind=payload.kind;try{localAfterCreate(id);}catch(e){}try{render();}catch(e){}}
+  }).catch(()=>{});
  }
  return r;
 };
@@ -123,11 +149,17 @@ function enhance(t,parent,pre){
   [...$('f_deps').options].forEach(o=>{o.selected=depSel.indexOf(o.value)>=0;});
   setText(ll,'Пауза после предыдущего, дней');
  }
- const prefill=()=>{const par=by.get(chosen);if(par&&$('f_start')){$('f_start').value=par.start;$('f_end').value=par.start;}};
- const stageDates=()=>{
-  if(!create||!$('f_start')||parent)return;
-  const sg=state.tasks.filter(x=>x.projectId===pid()&&!x.parentId&&kindOf(x,by)==='stage');
-  if(sg.length){const last=sg.reduce((a,x)=>x.end>a?x.end:a,sg[0].end);$('f_start').value=plus(last,1);$('f_end').value=plus(last,7);}
+ const snap=()=>{
+  const par=by.get(chosen);
+  if(!par||!$('f_start')||!$('f_end'))return;
+  let s=$('f_start').value,e=$('f_end').value;
+  if(!s)return;
+  if(s<par.start)s=par.start;
+  if(s>par.end)s=par.end;
+  if(!e||e<s)e=s;
+  if(e>par.end)e=par.end;
+  $('f_start').value=s;
+  $('f_end').value=e;
  };
  kl.addEventListener('click',e=>{
   const b=e.target.closest('[data-kseg]');
@@ -135,10 +167,9 @@ function enhance(t,parent,pre){
   depSel=curDeps();
   if($('f_parent').value)chosen=$('f_parent').value;
   $('f_kind').value=b.dataset.kseg;
-  if(b.dataset.kseg==='stage')stageDates();
   refresh();
  });
- $('f_parent').onchange=()=>{chosen=$('f_parent').value;if(create)prefill();};
+ $('f_parent').onchange=()=>{chosen=$('f_parent').value;snap();};
  $('f_deps').onchange=()=>{depSel=curDeps();};
  $('f_project').addEventListener('change',()=>{chosen='';depSel=[];refresh();});
  refresh();
