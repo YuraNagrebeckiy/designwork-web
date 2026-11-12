@@ -5,10 +5,11 @@ const NEWT={stage:'Новый этап работ',task:'Новая задача
 const st=document.createElement('style');
 st.textContent=`.gantt .bar.k-stage{height:26px!important;top:4px!important;line-height:24px!important;font-weight:700;filter:brightness(.78)}
 .gantt .bar.k-sub{height:14px!important;top:10px!important;line-height:12px!important;font-size:10px!important;opacity:.9}
+.gantt .bar.k-free:not(.done):not(.pause){background:#2a9d8f!important}
 .kd{display:inline-block;flex:none;width:9px;height:9px;border-radius:3px}
 .kd.k-stage{background:#9b6bd3}.kd.k-task{background:var(--accent)}.kd.k-sub{background:var(--muted);border-radius:50%}
 .lg{display:inline-block;width:28px;height:0;vertical-align:middle;margin:0 4px 0 10px}
-.lg.c1{border-top:3px solid #9b6bd3}.lg.c2{border-top:2px dashed var(--accent)}.lg.c3{border-top:2px dotted var(--muted)}.lg.c4{border-top:2px solid var(--muted)}
+.lg.c1{border-top:3px solid #9b6bd3}.lg.c2{border-top:2px dashed var(--accent)}.lg.c3{border-top:2px dotted var(--muted)}.lg.c4{border-top:2px solid var(--muted)}.lg.c5{border-top:4px solid #2a9d8f}
 .kseg{margin:0 0 10px}.kseg .seg{display:flex;gap:6px;margin-top:4px}.kseg .seg button{flex:1;border-radius:999px;padding:6px 8px;font-size:14px}.kseg .seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}`;
 document.head.appendChild(st);
 
@@ -38,28 +39,70 @@ function ctx(ts,touched){
  ts.forEach(t=>{if(t.parentId&&by.has(t.parentId)){if(!ch.has(t.parentId))ch.set(t.parentId,[]);ch.get(t.parentId).push(t);}});
  const desc=id=>{const o=[],q=[id];while(q.length){const c=q.shift();(ch.get(c)||[]).forEach(x=>{o.push(x);q.push(x.id);});}return o;};
  const shift=(t,d)=>{if(!d)return;[t].concat(desc(t.id)).forEach(x=>{x.start=plus(x.start,d);x.end=plus(x.end,d);touched.add(x.id);});};
- return {by:by,ch:ch,shift:shift};
+ return {by:by,ch:ch,desc:desc,shift:shift};
 }
-function settle(ts,touched,c,all){
- for(let it=0;it<200;it++){
-  let chg=false;
-  ts.forEach(x=>arr(x.deps).forEach(did=>{const y=c.by.get(did);if(!y)return;const s=plus(y.end,1+Number(x.lag||0));if(s>x.start){c.shift(x,days(x.start,s));chg=true;}}));
-  ts.forEach(x=>{const p=x.parentId?c.by.get(x.parentId):null;if(!p)return;if(x.start<p.start){p.start=x.start;touched.add(p.id);chg=true;}if(x.end>p.end){p.end=x.end;touched.add(p.id);chg=true;}});
-  const sg=ts.filter(x=>!x.parentId&&kindOf(x,all)==='stage').sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
-  for(let i=1;i<sg.length;i++){
-   const a=sg[i-1],b=sg[i];
-   if(b.start<=a.end&&(touched.has(a.id)||touched.has(b.id))){c.shift(b,days(b.start,workStart(plus(a.end,1),b.assigneeId)));chg=true;}
-  }
-  if(!chg)break;
+function isAnc(c,t,id){
+ let p=t.parentId?c.by.get(t.parentId):null,n=0;
+ while(p&&n++<10){if(p.id===id)return true;p=p.parentId?c.by.get(p.parentId):null;}
+ return false;
+}
+function succ(ts,c,group,e){
+ if(!e)return;
+ const done=new Set(group.map(x=>x.id)),q=group.slice();
+ while(q.length){
+  const p=q.shift();
+  ts.forEach(x=>{
+   if(done.has(x.id)||arr(x.deps).indexOf(p.id)<0)return;
+   const g=[x].concat(c.desc(x.id));
+   c.shift(x,e);
+   g.forEach(y=>{done.add(y.id);q.push(y);});
+  });
  }
+}
+function settle(ts,touched,c){
+ const snap=new Map(ts.map(x=>[x.id,[x.start,x.end]]));
+ let ok=false;
+ for(let it=0;it<120;it++){
+  let chg=false;
+  ts.forEach(x=>arr(x.deps).forEach(did=>{
+   const y=c.by.get(did);
+   if(!y||y.id===x.id||isAnc(c,x,y.id)||isAnc(c,y,x.id))return;
+   const s=plus(y.end,1+Number(x.lag||0));
+   if(s>x.start){c.shift(x,days(x.start,s));chg=true;}
+  }));
+  ts.forEach(x=>{
+   const p=x.parentId?c.by.get(x.parentId):null;
+   if(!p)return;
+   if(x.start<p.start){p.start=x.start;touched.add(p.id);chg=true;}
+   if(x.end>p.end){p.end=x.end;touched.add(p.id);chg=true;}
+  });
+  if(!chg){ok=true;break;}
+ }
+ let bad=!ok;
+ ts.forEach(x=>{const s=snap.get(x.id);if(Math.abs(days(s[0],x.start))>1500||Math.abs(days(s[1],x.end))>1500)bad=true;});
+ if(bad)ts.forEach(x=>{const s=snap.get(x.id);x.start=s[0];x.end=s[1];});
 }
 function localEdit(id,ns,ne){
  const t=state.tasks.find(x=>x.id===id);
  if(!t||String(id).indexOf('tmp-')===0)return;
- const ts=state.tasks.filter(x=>x.projectId===t.projectId),touched=new Set(),c=ctx(ts,touched),all=byId();
- const d=days(t.start,ns),same=days(ns,ne)===days(t.start,t.end);
- if(same)c.shift(t,d);
- else{
+ const ts=state.tasks.filter(x=>x.projectId===t.projectId),touched=new Set(),c=ctx(ts,touched);
+ const same=days(ns,ne)===days(t.start,t.end);
+ let earliest='';
+ arr(t.deps).forEach(i=>{
+  const p=c.by.get(i);
+  if(!p||p.id===t.id||isAnc(c,t,p.id)||isAnc(c,p,t.id))return;
+  const e=plus(p.end,1);
+  if(!earliest||e>earliest)earliest=e;
+ });
+ if(earliest&&ns<earliest){
+  if(same){const k=days(ns,earliest);ns=earliest;ne=plus(ne,k);}else ns=earliest;
+  if(ne<ns)ne=ns;
+ }
+ const group=[t].concat(c.desc(t.id)),oldEnd=t.end;
+ if(same){
+  c.shift(t,days(t.start,ns));
+  succ(ts,c,group,days(oldEnd,t.end));
+ }else{
   t.start=ns;t.end=ne;touched.add(t.id);
   const q=[t];
   while(q.length){
@@ -71,14 +114,20 @@ function localEdit(id,ns,ne){
     q.push(k);
    });
   }
+  succ(ts,c,[t],days(oldEnd,t.end));
  }
- settle(ts,touched,c,all);
+ if(earliest)t.lag=String(Math.max(0,days(earliest,t.start)));
+ settle(ts,touched,c);
 }
 function localAfterCreate(id){
  const t=state.tasks.find(x=>x.id===id);
  if(!t)return;
+ if(t.kind==='stage'&&!t.parentId){
+  const s=workStart(t.start,t.assigneeId),k=days(t.start,s);
+  if(k>0){t.start=s;t.end=plus(t.end,k);}
+ }
  const ts=state.tasks.filter(x=>x.projectId===t.projectId),touched=new Set([id]),c=ctx(ts,touched);
- settle(ts,touched,c,byId());
+ settle(ts,touched,c);
 }
 
 const prevCall=call;
@@ -144,7 +193,7 @@ function enhance(t,parent,pre){
    $('f_parent').value=chosen;
    chosen=$('f_parent').value;
   }
-  setText(dl,k==='stage'?'Идёт после этапа работ':'Идёт после (необязательно)');
+  setText(dl,k==='stage'?'Идёт после этапа работ (необязательно)':'Идёт после (необязательно)');
   $('f_deps').innerHTML=list.filter(x=>kindOf(x,by)===k).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.title)+'</option>').join('');
   [...$('f_deps').options].forEach(o=>{o.selected=depSel.indexOf(o.value)>=0;});
   setText(ll,'Пауза после предыдущего, дней');
@@ -181,11 +230,14 @@ function gantt(){
  const svg=root.querySelector('svg.depsvg');
  if(!svg||root.querySelector('.hlegend'))return;
  const by=byId(),rows=[...root.querySelectorAll('.grow')].filter(r=>!r.classList.contains('ghead')),pos=new Map();
+ const linked=new Set();
+ state.tasks.forEach(x=>arr(x.deps).forEach(d=>{linked.add(x.id);linked.add(d);}));
  rows.forEach((r,i)=>{
   const b=r.querySelector('.bar');if(!b)return;
   const t=by.get(b.dataset.id);if(!t)return;
   const k=kindOf(t,by);
   b.classList.add('k-'+k);
+  if(k==='stage'&&!t.parentId&&!linked.has(t.id))b.classList.add('k-free');
   const lb=r.querySelector('.glabel');
   if(lb&&!lb.querySelector('.kd'))lb.insertAdjacentHTML('afterbegin','<i class="kd k-'+k+'" title="'+KN[k]+'"></i>');
   pos.set(t.id,{i:i,l:parseFloat(b.style.left)||0,w:parseFloat(b.style.width)||0,k:k,t:t});
@@ -201,13 +253,17 @@ function gantt(){
   const stage=par.k==='stage';
   paths+='<path d="M '+x1+' '+y1+' V '+y2+' H '+x2+'" fill="none" stroke="'+(stage?'var(--accent)':'var(--muted)')+'" stroke-width="'+(stage?1.8:1.4)+'" stroke-dasharray="'+(stage?'6 3':'2 3')+'" marker-end="url(#'+(stage?'arrow2':'arrow')+')"/>';
  });
- const sg=[...pos.values()].filter(x=>x.k==='stage'&&!x.t.parentId).sort((a,b)=>a.t.start.localeCompare(b.t.start));
- for(let i=1;i<sg.length;i++){
-  const a=sg[i-1],b=sg[i],x1=a.l+a.w,x2=b.l,y1=a.i*RH+17,y2=b.i*RH+17,xm=x1+Math.max(0,Math.min(8,(x2-x1)/2));
-  paths+='<path d="M '+x1+' '+y1+' H '+xm+' V '+y2+' H '+Math.max(x2,xm)+'" fill="none" stroke="#9b6bd3" stroke-width="2.6" marker-end="url(#arrow3)"/>';
- }
+ pos.forEach(b=>{
+  if(b.k!=='stage')return;
+  arr(b.t.deps).forEach(did=>{
+   const a=pos.get(did);
+   if(!a||a.k!=='stage')return;
+   const x1=a.l+a.w,x2=b.l,y1=a.i*RH+17,y2=b.i*RH+17,xm=x1+Math.max(0,Math.min(8,(x2-x1)/2));
+   paths+='<path d="M '+x1+' '+y1+' H '+xm+' V '+y2+' H '+Math.max(x2,xm)+'" fill="none" stroke="#9b6bd3" stroke-width="2.6" marker-end="url(#arrow3)"/>';
+  });
+ });
  svg.insertAdjacentHTML('beforeend',paths);
- root.insertAdjacentHTML('beforeend','<p class="notice hlegend"><span class="lg c1"></span>этап → следующий этап<span class="lg c2"></span>этап → задача<span class="lg c3"></span>задача → подзадача<span class="lg c4"></span>зависимость</p>');
+ root.insertAdjacentHTML('beforeend','<p class="notice hlegend"><span class="lg c1"></span>этап → следующий этап<span class="lg c2"></span>этап → задача<span class="lg c3"></span>задача → подзадача<span class="lg c4"></span>зависимость<span class="lg c5"></span>независимый этап</p>');
 }
 
 const oRender=render;
