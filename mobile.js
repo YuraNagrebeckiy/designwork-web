@@ -3,6 +3,7 @@
 const st=document.createElement('style');
 st.id='mobilefix';
 st.textContent=`
+*{touch-action:manipulation}
 @media(max-width:760px){
 html{-webkit-text-size-adjust:100%}
 html,body{max-width:100%;overflow-x:hidden}
