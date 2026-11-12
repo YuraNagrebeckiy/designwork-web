@@ -4,14 +4,14 @@ window.STUDIO_API = 'https://script.google.com/macros/s/AKfycbyS2UbVSa_ZYzQ5jf1Z
 // Быстрая загрузка: модули скачиваются одновременно, выполняются строго по порядку,
 // экран скрыт и показывается один раз, когда всё готово (без промежуточных перерисовок).
 // Порядок: features, members, touch, analytics, work, plan, fire, cal, ins, obj, keep, web, drive, files, mood, board,
-// moodfix, ganttadd, supply, personal, sections, overview, hier, mobile, ui, final, harden, dialog.
+// moodfix, ganttadd, supply, personal, sections, overview, hier, mobile, ui, final, harden, dialog, branch.
 (function () {
   var root = document.documentElement;
   root.classList.add('booting');
   var css = document.createElement('style');
   css.textContent = 'html.booting #content,html.booting #nav{visibility:hidden}';
   document.head.appendChild(css);
-  var files = ['features.js', 'members.js', 'touch.js', 'analytics.js', 'work.js', 'plan.js', 'fire.js', 'cal.js', 'ins.js', 'obj.js', 'keep.js', 'web.js', 'drive.js', 'files.js', 'mood.js', 'board.js', 'moodfix.js', 'ganttadd.js', 'supply.js', 'personal.js', 'sections.js', 'overview.js', 'hier.js', 'mobile.js', 'ui.js', 'final.js', 'harden.js', 'dialog.js'];
+  var files = ['features.js', 'members.js', 'touch.js', 'analytics.js', 'work.js', 'plan.js', 'fire.js', 'cal.js', 'ins.js', 'obj.js', 'keep.js', 'web.js', 'drive.js', 'files.js', 'mood.js', 'board.js', 'moodfix.js', 'ganttadd.js', 'supply.js', 'personal.js', 'sections.js', 'overview.js', 'hier.js', 'mobile.js', 'ui.js', 'final.js', 'harden.js', 'dialog.js', 'branch.js'];
   var booting = true, pendingState = null, saved = null, finished = false;
   function finish() {
     if (finished) return;
