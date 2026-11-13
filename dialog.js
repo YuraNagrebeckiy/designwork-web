@@ -11,7 +11,7 @@ st.textContent=`#dialog{padding:14px 16px!important;max-width:540px}
 #editform .kseg{margin:0 0 6px}
 #editform .kseg .seg button{min-height:34px;padding:4px 8px;font-size:13px}
 #editform .formgrid{gap:8px;grid-template-columns:1fr 1fr}
-#editform .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0 8px;max-height:96px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+#editform .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0 8px;max-height:min(40vh,300px);overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px 8px}
 #editform .pick label.check{margin:2px 0}
 #editform small,#editform .notice{font-size:11px;margin:2px 0}
 #editform .footer{margin-top:10px;position:sticky;bottom:0;background:var(--panel);padding-top:8px}
