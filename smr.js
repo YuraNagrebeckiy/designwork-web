@@ -110,9 +110,12 @@ async function build(pid,ops){
    await step(i,async tries=>{
     if(tries){
      const s=await srv('state',{}),used=new Set([...ids.values()]),t=s.tasks.find(q=>q.projectId===pid&&q.title===x.title&&!used.has(q.id));
-     if(t){ids.set(x.key,t.id);return;}
+     if(t){
+      if(x.kind==='stage')await srv('sectionSet',{id:t.id,section:'build'});
+      ids.set(x.key,t.id);return;
+     }
     }
-    const id=await srv('taskCreate',{projectId:pid,parentId:x.parent?ids.get(x.parent):'',title:x.title,start:x.start,end:x.end,assigneeId:'',deps:x.deps.map(k=>ids.get(k)).filter(Boolean),lag:x.lag||0,kind:x.kind,calendarEnabled:false});
+    const id=await srv('taskCreate',{projectId:pid,parentId:x.parent?ids.get(x.parent):'',section:'build',title:x.title,start:x.start,end:x.end,assigneeId:'',deps:x.deps.map(k=>ids.get(k)).filter(Boolean),lag:x.lag||0,kind:x.kind,calendarEnabled:false});
     ids.set(x.key,id);
     if(x.kind==='stage')await srv('sectionSet',{id:id,section:'build'});
    });
