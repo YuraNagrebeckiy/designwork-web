@@ -84,7 +84,7 @@ async function build(o){
      const s=await srv('state',{}),used=new Set([...ids.values()]),t=s.tasks.find(q=>q.projectId===pid&&q.title===x.title&&!used.has(q.id));
      if(t){ids.set(x.key,t.id);return;}
     }
-    ids.set(x.key,await srv('taskCreate',{projectId:pid,parentId:x.parent?ids.get(x.parent):'',title:x.title,start:x.start,end:x.end,assigneeId:o.assignee,deps:x.deps.map(k=>ids.get(k)).filter(Boolean),lag:0,kind:x.kind,calendarEnabled:x.kind==='task'&&o.cal}));
+    ids.set(x.key,await srv('taskCreate',{projectId:pid,parentId:x.parent?ids.get(x.parent):'',title:x.title,note:x.note||'',start:x.start,end:x.end,assigneeId:o.assignee,deps:x.deps.map(k=>ids.get(k)).filter(Boolean),lag:0,kind:x.kind,calendarEnabled:x.kind==='task'&&o.cal}));
    });
   }
   clearInterval(timer);upd();
@@ -93,6 +93,10 @@ async function build(o){
   projectId=pid;view='projects';
   try{await reload();}catch(e){}
   render();
+  try{
+   const miss=o.ops.filter(x=>x.note&&state.tasks.some(q=>q.projectId===pid&&q.title===x.title&&!String(q.note||'').trim())).length;
+   if(miss)$('nb_time').textContent+=' Внимание: пояснения не сохранились у задач: '+miss+'. Сервер не принял поле «Пояснение» при создании.';
+  }catch(e){}
   const d=$('nb_done');if(d)d.classList.remove('hidden');
  }catch(e){
   clearInterval(timer);
