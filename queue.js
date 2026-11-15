@@ -2,7 +2,7 @@
 (function(){
 if(typeof document==='undefined'||typeof state==='undefined')return;
 const KEY='studioQueue:',DELAYS=[2,4,8,15,30];
-let Q=new Map(),owner='',flushing=false,timer=0,tick=0,sent=0,total=0,netDown=false,retry=0,nextAt=0,doneUntil=0,loading=false,loadShown=false,loadT=0,loadText='',loadN=-1,authStop=false;
+let Q=new Map(),owner='',flushing=false,timer=0,tick=0,sent=0,total=0,netDown=false,retry=0,nextAt=0,doneUntil=0,loading=false,loadShown=false,loadT=0,loadText='',loadN=-1,authStop=false,useBatch=true;
 const css=document.createElement('style');
 css.textContent='#syncbar{position:fixed;left:8px;right:8px;bottom:78px;max-width:480px;margin:0 auto;z-index:250;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:8px 12px;box-shadow:0 6px 22px #0003;font-size:13px;display:none}#syncbar.on{display:block}#syncbar.err{border-left-color:#e5484d}#syncbar b{display:block}#syncbar .pb{height:6px;border-radius:99px;background:rgba(127,127,127,.25);overflow:hidden;margin:6px 0 3px}#syncbar .pb i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}#syncbar.err .pb i{background:#e5484d}#syncbar .pb.ind i{width:35%;animation:sbi 1s ease-in-out infinite alternate}#syncbar small{display:block;color:var(--muted)}#syncbar button{margin-top:6px;min-height:30px;padding:2px 12px}@keyframes sbi{from{margin-left:0}to{margin-left:65%}}';
 document.head.appendChild(css);
@@ -43,6 +43,12 @@ function enqueue(t,next){
  if(!old)total++;
  persist();
 }
+async function bsend(ops){
+ const r=await transport({action:'taskUpdateBatch',payload:{ops:ops},token:token});
+ if(!r||!r.ok){const m=String(r&&r.error||'Сервер не ответил');if(m.indexOf('AUTH:')===0)signoutLocal();throw Error(m);}
+ return r.data;
+}
+const CONFLICT=/верси|устар|измен|конфликт|version|stale/i;
 async function flush(){
  if(flushing)return;
  if(!Q.size){paint();return;}
@@ -51,17 +57,43 @@ async function flush(){
  try{
   while(Q.size){
    if($('dialog').open)break;
-   const q=Q.values().next().value;
-   const cur=state&&state.tasks.find(x=>x.id===q.id);
-   if(!cur){Q.delete(q.id);sent++;persist();continue;}
+   const batch=[];
+   for(const q of Q.values()){
+    if(batch.length>=(useBatch?20:1))break;
+    const cur=state&&state.tasks.find(x=>x.id===q.id);
+    if(!cur){Q.delete(q.id);sent++;persist();continue;}
+    batch.push({q:q,cur:cur});
+   }
+   if(!batch.length)continue;
    try{
-    await call('taskUpdate',{id:q.id,version:cur.version,status:q.status});
-    Q.delete(q.id);sent++;persist();netDown=false;retry=0;
+    if(batch.length>1){
+     const r=await bsend(batch.map(b=>({id:b.q.id,version:b.cur.version,status:b.q.status})));
+     const res=(r&&r.results)||[],seen=new Set(res.map(x=>x.id));
+     let again=false;
+     res.forEach(x=>{
+      const q=Q.get(x.id);
+      if(!q)return;
+      if(x.ok){Q.delete(x.id);sent++;return;}
+      const m=String(x.error||'');
+      if(CONFLICT.test(m)&&!q.retried){q.retried=true;again=true;return;}
+      Q.delete(x.id);sent++;
+      toast('Не удалось сохранить статус: '+m);
+     });
+     persist();netDown=false;retry=0;
+     if(batch.some(b=>!seen.has(b.q.id)))useBatch=false;
+     if(again){try{await reload();}catch(x){}}
+    }else{
+     const b=batch[0];
+     await call('taskUpdate',{id:b.q.id,version:b.cur.version,status:b.q.status});
+     Q.delete(b.q.id);sent++;persist();netDown=false;retry=0;
+    }
    }catch(e){
     const m=String(e&&e.message||e);
     if(m.indexOf('AUTH:')===0){authStop=true;break;}
     if(/Нет связи|Сервер недоступен|слишком долго|Не настроен/.test(m)){netDown=true;break;}
-    if(/верси|устар|измен|конфликт|version|stale/i.test(m)&&!q.retried){
+    if(batch.length>1){useBatch=false;continue;}
+    const q=batch[0].q;
+    if(CONFLICT.test(m)&&!q.retried){
      q.retried=true;persist();
      try{await reload();}catch(x){}
      continue;
