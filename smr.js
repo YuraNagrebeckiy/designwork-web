@@ -38,19 +38,22 @@ const S=[
 const off=d=>{if(window.studioCal&&window.studioCal.kind)return !!window.studioCal.kind(d);const w=new Date(d+'T00:00:00Z').getUTCDay();return w===0||w===6;};
 const nextWork=d=>{for(let i=0;i<60&&off(d);i++)d=plus(d,1);return d;};
 const fd=d=>d.slice(8)+'.'+d.slice(5,7)+'.'+d.slice(0,4);
-function plan(start0){
+function plan(start0,sel){
  const start=nextWork(start0),M=new Map(),ops=[];
  S.forEach(st=>{
-  const rows=st.tasks.map(t=>{
+  const ts=st.tasks.filter(t=>!sel||sel.has(t.id));
+  if(!ts.length)return;
+  const rows=ts.map(t=>{
+   const deps=t.deps.filter(k=>M.has(k));
    let s;
    if(t.align&&M.has(t.align))s=M.get(t.align).start;
-   else if(t.deps.length){const e=t.deps.map(k=>M.get(k).end).reduce((a,b)=>b>a?b:a);s=nextWork(plus(e,1+(t.lag||0)));}
+   else if(deps.length){const e=deps.map(k=>M.get(k).end).reduce((a,b)=>b>a?b:a);s=nextWork(plus(e,1+(t.lag||0)));}
    else s=start;
-   const r={key:t.id,parent:st.id,title:t.title,kind:'task',start:s,end:plus(s,t.dur-1),deps:t.deps.slice(),lag:t.lag||0};
+   const r={key:t.id,parent:st.id,title:t.title,kind:'task',start:s,end:plus(s,t.dur-1),deps:deps,lag:deps.length?(t.lag||0):0};
    M.set(t.id,r);return r;
   });
   const s0=rows.map(r=>r.start).reduce((a,b)=>b<a?b:a),e0=rows.map(r=>r.end).reduce((a,b)=>b>a?b:a);
-  ops.push({key:st.id,parent:'',title:st.title,kind:'stage',start:s0,end:e0,deps:st.deps.slice(),lag:0});
+  ops.push({key:st.id,parent:'',title:st.title,kind:'stage',start:s0,end:e0,deps:st.deps.filter(k=>M.has(k)),lag:0});
   M.set(st.id,ops[ops.length-1]);
   rows.forEach(r=>ops.push(r));
  });
@@ -58,7 +61,10 @@ function plan(start0){
 }
 window.studioPlanSMR=plan;
 if(typeof document.createElement!=='function')return;
-let busy=false;
+const css=document.createElement('style');
+css.textContent='.smrf .seg{display:flex;gap:6px;margin:4px 0 10px}.smrf .seg button{flex:1;border-radius:999px;padding:6px 8px;font-size:14px}.smrf .seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}.smrf .npstage{margin:0 0 8px}.smrf .nptasks{margin-left:22px}.smrf .nptasks small{opacity:.7}.smrf ul{margin:4px 0 8px 18px;padding:0}';
+document.head.appendChild(css);
+let busy=false,mode='tpl';
 const mm=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
 async function srv(action,payload){
  const r=await transport({action:action,payload:payload||{},token:token});
@@ -142,20 +148,36 @@ async function build(pid,ops){
   throw e;
  }finally{busy=false;dialog.removeEventListener('cancel',block);}
 }
+const picked=()=>mode==='tpl'?null:mode==='empty'?new Set():new Set([...document.querySelectorAll('#smr_pick [data-sgt]:checked')].map(i=>i.dataset.sgt));
+function refresh(){
+ if(!$('smr_sum'))return;
+ document.querySelectorAll('[data-smode]').forEach(b=>b.classList.toggle('on',b.dataset.smode===mode));
+ $('smr_pick').classList.toggle('hidden',mode!=='pick');
+ $('smr_tpl').classList.toggle('hidden',mode!=='tpl');
+ if(mode==='empty'){$('smr_sum').textContent='Стройка останется без задач. Этапы и задачи можно добавить позже.';return;}
+ const ops=plan($('smr_start').value||today(),picked()),n=ops.filter(o=>o.kind==='task').length;
+ $('smr_sum').textContent=n?'Задач: '+n+', этапов: '+ops.filter(o=>o.kind==='stage').length+'. Ориентировочное окончание стройки: '+fd(ops.map(o=>o.end).reduce((a,b)=>b>a?b:a))+'.':'Ничего не выбрано.';
+}
 function openForm(){
  const pid=projectId;
- showForm('<div class="smr"><h2>Строительно-монтажные работы (СМР)</h2><p class="notice">Будут добавлены 7 этапов и 25 задач в раздел «Стройка» с зависимостями, параллельными работами и технологическими паузами. Сроки каждой задачи потом можно менять. Исполнители не назначаются.</p><label>Дата начала СМР (после подписания договора)<input id="smr_start" type="date" value="'+today()+'" required></label><p id="smr_sum" class="notice"></p></div>',async()=>{
+ mode='tpl';
+ const tree=S.map(s=>'<div class="npstage"><label class="check"><input type="checkbox" data-sgs="'+s.id+'" checked><b>'+esc(s.title)+'</b></label><div class="nptasks">'+s.tasks.map(t=>'<label class="check"><input type="checkbox" data-sgt="'+t.id+'" data-sgp="'+s.id+'" checked>'+esc(t.title)+' <small>'+t.dur+' дн.</small></label>').join('')+'</div></div>').join('');
+ showForm('<div class="smr smrf"><h2>Строительно-монтажные работы (СМР)</h2><label>Дата начала СМР (после подписания договора)<input id="smr_start" type="date" value="'+today()+'" required></label><small>Состав стройки</small><div class="seg"><button type="button" data-smode="tpl">Готовый шаблон</button><button type="button" data-smode="pick">Выбрать части</button><button type="button" data-smode="empty">Пустой</button></div><p id="smr_tpl" class="notice">Будут добавлены 7 этапов и 25 задач в раздел «Стройка» с зависимостями, параллельными работами и технологическими паузами. Сроки каждой задачи потом можно менять. Исполнители не назначаются.</p><div id="smr_pick" class="hidden">'+tree+'</div><p id="smr_sum" class="notice"></p></div>',async()=>{
+  if(mode==='empty')return;
   const s=$('smr_start').value;if(!s)throw Error('Укажите дату начала');
-  await build(pid,plan(s));
+  const sel=picked();
+  if(mode==='pick'&&!sel.size)throw Error('Выберите хотя бы один этап или задачу');
+  await build(pid,plan(s,sel));
  });
- sum();
+ refresh();
 }
-function sum(){
- const e=$('smr_sum'),i=$('smr_start');if(!e||!i)return;
- const ops=plan(i.value||today());
- e.textContent='Ориентировочное окончание стройки: '+fd(ops.map(o=>o.end).reduce((a,b)=>b>a?b:a))+'.';
-}
-document.addEventListener('change',e=>{if(e.target&&e.target.id==='smr_start')sum();});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-smode]');if(b){mode=b.dataset.smode;refresh();}});
+document.addEventListener('change',e=>{
+ const el=e.target,d=(el&&el.dataset)||{};
+ if(d.sgs){document.querySelectorAll('#smr_pick [data-sgp="'+d.sgs+'"]').forEach(i=>{i.checked=el.checked;});refresh();}
+ else if(d.sgt){const s=document.querySelector('#smr_pick [data-sgs="'+d.sgp+'"]');if(s)s.checked=!!document.querySelector('#smr_pick [data-sgp="'+d.sgp+'"]:checked');refresh();}
+ else if(el&&el.id==='smr_start')refresh();
+});
 document.addEventListener('click',e=>{
  const b=e.target.closest&&e.target.closest('[data-buildtpl]');
  if(!b)return;
