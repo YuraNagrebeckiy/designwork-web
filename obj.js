@@ -15,6 +15,10 @@ function tag(){
   c.insertBefore(b,c.firstChild);
  });
 }
+document.addEventListener('click',e=>{
+ const b=e.target.closest&&e.target.closest('#nav [data-view="projects"]');
+ if(b)projectId='';
+},true);
 const oRender=render;
 render=function(){const r=oRender.apply(this,arguments);try{tag();}catch(e){}return r;};
 if(state)render();
