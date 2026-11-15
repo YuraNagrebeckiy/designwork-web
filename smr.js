@@ -1,7 +1,7 @@
 'use strict';
 (function(){
 if(typeof showForm==='undefined'||typeof document==='undefined')return;
-const S=[
+const S_FLAT=[
 {id:'s1',title:'1. Подготовительный период',deps:[],tasks:[
 {id:'1.1',title:'1.1 Демонтаж лестницы',dur:2,deps:[]},
 {id:'1.2',title:'1.2 Демонтаж перегородок',dur:3,deps:[]},
@@ -35,10 +35,47 @@ const S=[
 {id:'s7',title:'7. Завершение стройки',deps:['s6'],tasks:[
 {id:'7.1',title:'7.1 Финальная уборка помещений',dur:1,deps:['6.5','6.6']}]}
 ];
+const PAUSE='Технологическая пауза: срок фиксированный, при сдвигах графика не сокращать. ';
+const S_BLD=[
+{id:'b1',title:'1. Нулевой цикл и фундамент',deps:[],tasks:[
+{id:'1.1',title:'1.1 Подготовительные, земляные работы и прокладка закладных под коммуникации',dur:5,deps:[]},
+{id:'1.2',title:'1.2 Устройство песчано-щебёночной подушки и подбетонки',dur:3,deps:['1.1']},
+{id:'1.3',title:'1.3 Монтаж опалубки и вязка арматурного каркаса',dur:6,deps:['1.2']},
+{id:'1.4',title:'1.4 [Авторский надзор] Приёмка осей и армирования (блокирующая веха)',dur:1,deps:['1.3'],note:'Чек-лист для ГАПа: проверка диагоналей и геодезической привязки к границам участка. Сверка высотной отметки чистового пола (±0.000). Проверка защитного слоя арматуры и расположения гильз под ввод воды и электричества. Без приёмки заливку не начинать.'},
+{id:'1.5',title:'1.5 Бетонирование фундамента',dur:1,deps:['1.4']},
+{id:'1.6',title:'1.6 Технологическая пауза (набор прочности бетона)',dur:14,deps:['1.5'],fixed:true,note:PAUSE+'Минимум 7–14 дней до снятия опалубки, до 28 дней до полной нагрузки. По умолчанию стоит 14 дней.'},
+{id:'1.7',title:'1.7 Гидроизоляция и утепление цоколя',dur:5,deps:['1.6']}]},
+{id:'b2',title:'2. Возведение коробки',deps:['b1'],tasks:[
+{id:'2.1',title:'2.1 Кладка наружных и внутренних несущих стен (1-й этаж)',dur:20,deps:['1.7']},
+{id:'2.2',title:'2.2 [Авторский надзор] Приёмка геометрии 1-го этажа (блокирующая веха)',dur:1,deps:['2.1'],note:'Чек-лист для ГАПа: проверка высот подоконных зон и габаритов дверных и оконных проёмов с учётом будущего пирога пола. Контроль вертикальности стен.'},
+{id:'2.3',title:'2.3 Устройство перемычек и монолитного армопояса',dur:7,deps:['2.2']},
+{id:'2.4',title:'2.4 Бетонирование армопояса и технологическая пауза',dur:8,deps:['2.3'],fixed:true,note:PAUSE+'1 день бетонирования и 7 дней набора прочности.'}]},
+{id:'b3',title:'3. Межэтажные перекрытия',deps:['b2'],tasks:[
+{id:'3.1',title:'3.1 Монтаж опалубки, вязка арматуры перекрытия (или укладка готовых плит)',dur:10,deps:['2.4']},
+{id:'3.2',title:'3.2 [Авторский надзор] Приёмка армирования перекрытия',dur:1,deps:['3.1'],note:'Чек-лист для ГАПа: наличие отверстий (шахт) под инженерные коммуникации (вентиляция, фановые трубы, дымоходы). Усиление зон вокруг проёмов для лестниц.'},
+{id:'3.3',title:'3.3 Бетонирование перекрытия и технологическая пауза',dur:15,deps:['3.2'],fixed:true,note:PAUSE+'1 день бетонирования и 14 дней набора прочности.'},
+{id:'3.4',title:'3.4 Кладка стен 2-го этажа / мансарды (повторение цикла 2.1–2.4)',dur:20,deps:['3.3']}]},
+{id:'b4',title:'4. Кровля',deps:['b3'],tasks:[
+{id:'4.1',title:'4.1 Монтаж мауэрлата и стропильной системы',dur:10,deps:['3.4']},
+{id:'4.2',title:'4.2 [Авторский надзор] Приёмка формы кровли (блокирующая веха)',dur:1,deps:['4.1'],note:'Чек-лист для ГАПа: визуальный контроль пропорций, углов уклона, выносов карнизных и фронтонных свесов. Проверка узлов опирания на мауэрлат и геометрии кукушек и мансардных окон.'},
+{id:'4.3',title:'4.3 Монтаж гидро- и пароизоляции, утепление кровли',dur:7,deps:['4.2']},
+{id:'4.4',title:'4.4 Укладка финишного кровельного покрытия и монтаж водосточной системы',dur:7,deps:['4.3']}]},
+{id:'b5',title:'5. Тепловой контур и фасад',deps:[],tasks:[
+{id:'5.1',title:'5.1 Монтаж оконных блоков и наружных дверей',dur:5,deps:['4.1']},
+{id:'5.2',title:'5.2 [Авторский надзор] Контроль окон и фасадных выкрасов',dur:1,deps:[],align:'5.1',note:'Идёт параллельно с 5.1. Чек-лист для ГАПа: проверка глубины посадки оконных блоков в зоне утеплителя (исключение мостиков холода). Утверждение выкрасов фасада на объекте при естественном освещении (теневая и солнечная сторона). Контроль раскладки шпросов и цвета профиля.'},
+{id:'5.3',title:'5.3 Утепление фасада',dur:10,deps:['5.1']},
+{id:'5.4',title:'5.4 Нанесение базового армирующего слоя и декоративной штукатурки (или монтаж вентфасада / планкена)',dur:14,deps:['5.3']},
+{id:'5.5',title:'5.5 [Авторский надзор] Финальная приёмка фасада',dur:1,deps:['5.4'],note:'Чек-лист для ГАПа: контроль стыков разных материалов фасада (дерево, камень, штукатурка), ровность примыканий к оконным отливам и карнизным свесам, скрытый монтаж водосточных труб (если применимо).'}]}
+];
+const TPL={
+ flat:{name:'СМР Квартира',S:S_FLAT,extra:''},
+ bld:{name:'СМР Здание',S:S_BLD,extra:' Технологические паузы бетона (1.6, 2.4, 3.3) помечены как фиксированные, в задачах «Авторский надзор» есть чек-листы.'}
+};
 const off=d=>{if(window.studioCal&&window.studioCal.kind)return !!window.studioCal.kind(d);const w=new Date(d+'T00:00:00Z').getUTCDay();return w===0||w===6;};
 const nextWork=d=>{for(let i=0;i<60&&off(d);i++)d=plus(d,1);return d;};
 const fd=d=>d.slice(8)+'.'+d.slice(5,7)+'.'+d.slice(0,4);
-function plan(start0,sel){
+function plan(start0,sel,tpl){
+ const S=(tpl||TPL.flat).S;
  const start=nextWork(start0),M=new Map(),ops=[];
  S.forEach(st=>{
   const ts=st.tasks.filter(t=>!sel||sel.has(t.id));
@@ -49,22 +86,23 @@ function plan(start0,sel){
    if(t.align&&M.has(t.align))s=M.get(t.align).start;
    else if(deps.length){const e=deps.map(k=>M.get(k).end).reduce((a,b)=>b>a?b:a);s=nextWork(plus(e,1+(t.lag||0)));}
    else s=start;
-   const r={key:t.id,parent:st.id,title:t.title,kind:'task',start:s,end:plus(s,t.dur-1),deps:deps,lag:deps.length?(t.lag||0):0};
+   const r={key:t.id,parent:st.id,title:t.title,kind:'task',start:s,end:plus(s,t.dur-1),deps:deps,lag:deps.length?(t.lag||0):0,note:t.note||'',fixed:!!t.fixed};
    M.set(t.id,r);return r;
   });
   const s0=rows.map(r=>r.start).reduce((a,b)=>b<a?b:a),e0=rows.map(r=>r.end).reduce((a,b)=>b>a?b:a);
-  ops.push({key:st.id,parent:'',title:st.title,kind:'stage',start:s0,end:e0,deps:st.deps.filter(k=>M.has(k)),lag:0});
+  ops.push({key:st.id,parent:'',title:st.title,kind:'stage',start:s0,end:e0,deps:st.deps.filter(k=>M.has(k)),lag:0,note:'',fixed:false});
   M.set(st.id,ops[ops.length-1]);
   rows.forEach(r=>ops.push(r));
  });
  return ops;
 }
-window.studioPlanSMR=plan;
+window.studioPlanSMR=(a,b)=>plan(a,b,TPL.flat);
+window.studioPlanSMRBuilding=(a,b)=>plan(a,b,TPL.bld);
 if(typeof document.createElement!=='function')return;
 const css=document.createElement('style');
 css.textContent='.smrf .seg{display:flex;gap:6px;margin:4px 0 10px}.smrf .seg button{flex:1;border-radius:999px;padding:6px 8px;font-size:14px}.smrf .seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}.smrf .npstage{margin:0 0 8px}.smrf .nptasks{margin-left:22px}.smrf .nptasks small{opacity:.7}.smrf ul{margin:4px 0 8px 18px;padding:0}';
 document.head.appendChild(css);
-let busy=false,mode='tpl';
+let busy=false,mode='tpl',cur=TPL.flat;
 const mm=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
 async function srv(action,payload){
  const r=await transport({action:action,payload:payload||{},token:token});
@@ -121,7 +159,10 @@ async function build(pid,ops){
       ids.set(x.key,t.id);return;
      }
     }
-    const id=await srv('taskCreate',{projectId:pid,parentId:x.parent?ids.get(x.parent):'',section:'build',title:x.title,start:x.start,end:x.end,assigneeId:'',deps:x.deps.map(k=>ids.get(k)).filter(Boolean),lag:x.lag||0,kind:x.kind,calendarEnabled:false});
+    const pl={projectId:pid,parentId:x.parent?ids.get(x.parent):'',section:'build',title:x.title,start:x.start,end:x.end,assigneeId:'',deps:x.deps.map(k=>ids.get(k)).filter(Boolean),lag:x.lag||0,kind:x.kind,calendarEnabled:false};
+    if(x.note)pl.note=x.note;
+    if(x.fixed)pl.isFixedDuration=true;
+    const id=await srv('taskCreate',pl);
     ids.set(x.key,id);
     if(x.kind==='stage')await srv('sectionSet',{id:id,section:'build'});
    });
@@ -155,19 +196,20 @@ function refresh(){
  $('smr_pick').classList.toggle('hidden',mode!=='pick');
  $('smr_tpl').classList.toggle('hidden',mode!=='tpl');
  if(mode==='empty'){$('smr_sum').textContent='Стройка останется без задач. Этапы и задачи можно добавить позже.';return;}
- const ops=plan($('smr_start').value||today(),picked()),n=ops.filter(o=>o.kind==='task').length;
+ const ops=plan($('smr_start').value||today(),picked(),cur),n=ops.filter(o=>o.kind==='task').length;
  $('smr_sum').textContent=n?'Задач: '+n+', этапов: '+ops.filter(o=>o.kind==='stage').length+'. Ориентировочное окончание стройки: '+fd(ops.map(o=>o.end).reduce((a,b)=>b>a?b:a))+'.':'Ничего не выбрано.';
 }
-function openForm(){
+function openForm(kind){
  const pid=projectId;
- mode='tpl';
+ mode='tpl';cur=TPL[kind]||TPL.flat;
+ const S=cur.S,nt=S.reduce((a,s)=>a+s.tasks.length,0);
  const tree=S.map(s=>'<div class="npstage"><label class="check"><input type="checkbox" data-sgs="'+s.id+'" checked><b>'+esc(s.title)+'</b></label><div class="nptasks">'+s.tasks.map(t=>'<label class="check"><input type="checkbox" data-sgt="'+t.id+'" data-sgp="'+s.id+'" checked>'+esc(t.title)+' <small>'+t.dur+' дн.</small></label>').join('')+'</div></div>').join('');
- showForm('<div class="smr smrf"><h2>Строительно-монтажные работы (СМР)</h2><label>Дата начала СМР (после подписания договора)<input id="smr_start" type="date" value="'+today()+'" required></label><small>Состав стройки</small><div class="seg"><button type="button" data-smode="tpl">Готовый шаблон</button><button type="button" data-smode="pick">Выбрать части</button><button type="button" data-smode="empty">Пустой</button></div><p id="smr_tpl" class="notice">Будут добавлены 7 этапов и 25 задач в раздел «Стройка» с зависимостями, параллельными работами и технологическими паузами. Сроки каждой задачи потом можно менять. Исполнители не назначаются.</p><div id="smr_pick" class="hidden">'+tree+'</div><p id="smr_sum" class="notice"></p></div>',async()=>{
+ showForm('<div class="smr smrf"><h2>'+esc(cur.name)+'</h2><label>Дата начала работ<input id="smr_start" type="date" value="'+today()+'" required></label><small>Состав стройки</small><div class="seg"><button type="button" data-smode="tpl">Готовый</button><button type="button" data-smode="pick">Выбрать части</button><button type="button" data-smode="empty">Пустой</button></div><p id="smr_tpl" class="notice">Будут добавлены этапов: '+S.length+', задач: '+nt+' в раздел «Стройка» с зависимостями и технологическими паузами. Сроки каждой задачи потом можно менять. Исполнители не назначаются.'+esc(cur.extra)+'</p><div id="smr_pick" class="hidden">'+tree+'</div><p id="smr_sum" class="notice"></p></div>',async()=>{
   if(mode==='empty')return;
   const s=$('smr_start').value;if(!s)throw Error('Укажите дату начала');
   const sel=picked();
   if(mode==='pick'&&!sel.size)throw Error('Выберите хотя бы один этап или задачу');
-  await build(pid,plan(s,sel));
+  await build(pid,plan(s,sel,cur));
  });
  refresh();
 }
@@ -179,15 +221,20 @@ document.addEventListener('change',e=>{
  else if(el&&el.id==='smr_start')refresh();
 });
 document.addEventListener('click',e=>{
- const b=e.target.closest&&e.target.closest('[data-buildtpl]');
+ const b=e.target.closest&&e.target.closest('[data-smrk]');
  if(!b)return;
  e.stopImmediatePropagation();e.preventDefault();
- if(typeof admin==='function'&&admin())openForm();
+ if(typeof admin==='function'&&admin())openForm(b.dataset.smrk);
 },true);
 const oR=render;
 render=function(){
  const r=oR.apply(this,arguments);
- try{document.querySelectorAll('[data-buildtpl]').forEach(b=>{b.textContent='Добавить шаблон СМР';});}catch(e){}
+ try{document.querySelectorAll('[data-buildtpl]').forEach(b=>{
+  b.textContent='СМР Квартира';b.dataset.smrk='flat';
+  if(b.parentNode&&!b.parentNode.querySelector('[data-smrk="bld"]')){
+   const x=document.createElement('button');x.type='button';x.className=b.className;x.dataset.smrk='bld';x.textContent='СМР Здание';b.after(x);
+  }
+ });}catch(e){}
  return r;
 };
 if(state)render();
