@@ -67,8 +67,8 @@ renderGantt=function(id){
 const oPw=passwordForm;
 passwordForm=function(){
  oPw.apply(this,arguments);
- ['pw1','pw2'].forEach(i=>{const e=$(i);if(e)e.minLength=12;});
+ ['pw1','pw2'].forEach(i=>{const e=$(i);if(e)e.minLength=4;});
  const n=$('dialog').querySelector('.notice');
- if(n)n.textContent='От 12 символов, лучше длиннее. Дальше вы будете входить по email и паролю.';
+ if(n)n.textContent='От 4 символов, лучше длиннее. Дальше вы будете входить по email и паролю.';
 };
 })();
