@@ -85,6 +85,9 @@ function anLinks(){
  drawLinks(g,bars);
 }
 const NL=String.fromCharCode(10);
+const stl=document.createElement('style');
+stl.textContent='.slf label{display:grid;gap:4px;margin:10px 0}.slf label.check{display:flex;align-items:center;gap:8px}.slf textarea{width:100%;box-sizing:border-box;min-height:96px;resize:vertical;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px}.slf input:not([type=checkbox]){width:100%;box-sizing:border-box}';
+document.head.appendChild(stl);
 const tmf=v=>{let h=Math.floor(v+1e-9),m=Math.round((v-h)*60);if(m===60){h++;m=0;}return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');};
 function psubBtns(){
  if(typeof state==='undefined'||!state||!state.tasks)return;
