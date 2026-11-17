@@ -86,7 +86,7 @@ function anLinks(){
 }
 const NL=String.fromCharCode(10);
 const stl=document.createElement('style');
-stl.textContent='.slf label{display:grid;gap:4px;margin:10px 0}.slf label.check{display:flex;align-items:center;gap:8px}.slf textarea{width:100%;box-sizing:border-box;min-height:96px;resize:vertical;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px}.slf input:not([type=checkbox]){width:100%;box-sizing:border-box}';
+stl.textContent='.slf label{display:grid;gap:4px;margin:10px 0}.slf label.check{display:flex;align-items:center;gap:8px}.slf textarea{width:100%;box-sizing:border-box;min-height:96px;resize:vertical;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px}.slf input:not([type=checkbox]){width:100%;box-sizing:border-box}.libf pre{max-height:300px!important}#lb_load{margin:10px 0}#lb_load h4{margin:0 0 6px;font-size:13px}.lbd{display:flex;gap:3px;align-items:flex-end;overflow-x:auto;padding:4px 0}.lbd>div{flex:none;width:26px;text-align:center;font-size:10px;color:var(--muted);border-radius:6px;padding-top:2px}.lbd>div.in{background:rgba(82,101,223,.14)}.lbd>div.off{opacity:.55}.lbd i{display:block;margin:0 auto 2px;width:16px;border-radius:4px 4px 0 0;background:#5265df}.lbd i.m{background:#c9822b}.lbd i.h{background:#e5484d}.lbd i.z{background:rgba(127,127,127,.3)}.lbspin{perspective:300px;display:flex;justify-content:center;margin:6px 0 10px}.lbspin svg{width:64px;height:58px;animation:lbsp 1.4s linear infinite}.lbspin.stop svg{animation:none}@keyframes lbsp{to{transform:rotateY(360deg)}}.lbfact{margin-top:12px;padding-top:8px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.4}.lbfact b{color:var(--ink)}';
 document.head.appendChild(stl);
 const tmf=v=>{let h=Math.floor(v+1e-9),m=Math.round((v-h)*60);if(m===60){h++;m=0;}return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');};
 function psubBtns(){
@@ -158,10 +158,21 @@ if(cont){
 }
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const BL=new Set();
+let lbWho='';
+const personalOf=uid=>state.projects.find(p=>String(p.name).indexOf('Личное: ')===0&&A(p.members)[0]===uid);
 const oT=transport;
 transport=async function(req){
  if(!(req&&req.action==='taskCreate'&&req.payload&&document.getElementById('lb_top')))return oT.apply(this,arguments);
  const p=Object.assign({},req.payload),note=String(p.note||''),lines=note.split(NL);
+ if(lbWho&&lbWho!==state.me.id){
+  const mine=state.projects.find(x=>x.id===p.projectId);
+  if(mine&&String(mine.name).indexOf('Личное: ')===0&&A(mine.members)[0]===state.me.id){
+   const pp=personalOf(lbWho);
+   if(!pp)return {ok:false,error:'У исполнителя нет личного пространства. Выберите объект в поле «Куда добавить».'};
+   p.projectId=pp.id;
+  }
+  p.assigneeId=lbWho;
+ }
  const items=lines.filter(l=>l.indexOf('☐ ')===0).map(l=>l.slice(2));
  let isB=false,kids=null;
  if(!p.parentId&&p.kind==='task'&&note.indexOf('Размер и сложность учтены')===0){p.kind='stage';isB=true;}
@@ -180,9 +191,79 @@ transport=async function(req){
  }catch(e){}
  return res;
 };
+let FACTS=['Зазор для вентиляции кровельного пирога обычно не менее 40–50 мм.','Закладывайте в график 10–20% времени на согласования и правки.'];
+try{
+ fetch('busy.js').then(r=>r.text()).then(t=>{
+  const m=t.match(/const FACTS=\[([\s\S]*?)\n\];/);
+  if(m){const a=(new Function('return ['+m[1]+']'))();if(a&&a.length)FACTS=a;}
+ }).catch(()=>{});
+}catch(e){}
+let factI=Math.floor(Math.random()*50),factAt=0;
+function loadPanel(){
+ const box=document.getElementById('lb_load'),sel=document.getElementById('lb_who');
+ if(!box||!sel)return;
+ lbWho=sel.value;
+ const st=(document.getElementById('lb_start')||{}).value||today();
+ const sm=(document.getElementById('lb_sum')||{}).textContent||'';
+ const m=sm.match(/до (\d\d)\.(\d\d)\.(\d{4})/);
+ const en=m?m[3]+'-'+m[2]+'-'+m[1]:plus(st,6);
+ const n=Math.max(7,Math.min(28,days(st,en)+3));
+ const leaf=new Set(state.tasks.map(t=>t.parentId).filter(Boolean));
+ const mine=state.tasks.filter(t=>t.assigneeId===lbWho&&t.status!=='Готово'&&!leaf.has(t.id));
+ let cells='';
+ for(let i=0;i<n;i++){
+  const d=plus(st,i),dw=new Date(d+'T00:00:00Z').getUTCDay(),act=mine.filter(t=>t.start<=d&&t.end>=d),hr=act.reduce((s,t)=>s+(Number(t.hours)>0?Number(t.hours):0),0),c=act.length;
+  const cls=hr>8||c>=5?'h':(c>=3?'m':(c?'':'z'));
+  cells+='<div class="'+(d<=en?'in':'')+(dw===0||dw===6?' off':'')+'" title="'+d+': задач '+c+(hr?', часов '+hr:'')+'"><i class="'+cls+'" style="height:'+(6+Math.min(c,6)*8)+'px"></i>'+d.slice(8)+'</div>';
+ }
+ const uname=(state.users.find(u=>u.id===lbWho)||{}).name||'';
+ const tg=document.getElementById('lb_target');
+ const warn=(lbWho!==state.me.id&&tg&&!tg.value&&!personalOf(lbWho))?'<p class="notice">У сотрудника нет личного пространства: выберите объект в поле «Куда добавить».</p>':'';
+ box.innerHTML='<h4>Нагрузка: '+esc(uname)+' — открытые задачи по дням. Период ветки выделен.</h4><div class="lbd">'+cells+'</div><small>Высота столбца — число задач в день. Оранжевый — от 3, красный — от 5 или больше 8 часов.</small>'+warn;
+}
+function libEnhance(){
+ const tg=document.getElementById('lb_target');
+ if(!tg||document.getElementById('lb_who'))return;
+ if(!(typeof admin==='function'&&admin()))return;
+ const us=state.users.filter(u=>u.approved==='true'&&u.role!=='observer').sort((a,b)=>String(a.name).localeCompare(String(b.name),'ru'));
+ const lab=document.createElement('label');
+ lab.innerHTML='Исполнитель (вся ветка придёт ему в «Мои задачи»)<select id="lb_who">'+us.map(u=>'<option value="'+esc(u.id)+'"'+(u.id===state.me.id?' selected':'')+'>'+esc(u.name)+'</option>').join('')+'</select>';
+ tg.closest('label').after(lab);
+ const pre=document.getElementById('lb_pre');
+ if(pre&&!document.getElementById('lb_load')){const ld=document.createElement('div');ld.id='lb_load';pre.after(ld);}
+ lbWho=state.me.id;
+ setTimeout(loadPanel,30);
+}
+function runDecor(){
+ const top=document.getElementById('lb_top');
+ if(!top)return;
+ const nbp=top.closest('.nbp');
+ if(!nbp||nbp.querySelector('.lbspin'))return;
+ const sp=document.createElement('div');
+ sp.className='lbspin';
+ sp.innerHTML='<svg viewBox="340 95 330 370" aria-hidden="true"><use href="#cubes" stroke="#7b7b7b" stroke-width="4"/><use href="#redcube"/></svg>';
+ nbp.insertBefore(sp,nbp.firstChild);
+ const ft=document.createElement('div');
+ ft.className='lbfact';
+ nbp.appendChild(ft);
+ factAt=0;
+}
+setInterval(()=>{
+ const ft=document.querySelector('.lbfact'),sp=document.querySelector('.lbspin'),top=document.getElementById('lb_top');
+ if(!ft||!top)return;
+ const now=Date.now();
+ if(now-factAt>7000){factI=(factI+1)%FACTS.length;factAt=now;ft.innerHTML='<b>Знаете ли вы?</b> '+FACTS[factI];}
+ if(sp&&/^(Готово|Создание прервано)/.test(top.textContent))sp.classList.add('stop');
+},1000);
+document.addEventListener('change',e=>{
+ const el=e.target;
+ if(el&&el.id&&(el.id==='lb_who'||el.id.indexOf('lb_')===0))setTimeout(loadPanel,60);
+});
 const dlg=document.getElementById('dialog');
 if(dlg){
  new MutationObserver(()=>{
+  try{libEnhance();}catch(e){}
+  try{runDecor();}catch(e){}
   const s=document.getElementById('lb_sum'),t=document.getElementById('lb_target');
   if(!s||!t||t.value)return;
   const re=/задач [0-9]+, подзадач [0-9]+[.]/;
