@@ -2,6 +2,41 @@
 (function(){
 if(typeof document==='undefined'||typeof render==='undefined')return;
 const g=id=>document.getElementById(id);
+const st=document.createElement('style');
+st.textContent='.gantt .grow.bsep .glabel{box-shadow:inset 6px 0 0 hsl(var(--bh),50%,72%),inset 0 4px 0 hsl(var(--bh),55%,48%)!important}.gantt .grow.bsep .track{box-shadow:inset 0 4px 0 hsl(var(--bh),55%,48%)}';
+document.head.appendChild(st);
+const HU=[262,28,174,330,48,205,350,120];
+function sepPaint(){
+ const root=g('ganttRoot');
+ if(!root||typeof state==='undefined'||!state||!state.tasks)return;
+ const rows=[...root.querySelectorAll('.grow')].filter(r=>!r.classList.contains('ghead')&&r.querySelector('.bar'));
+ if(!rows.length)return;
+ const A=x=>Array.isArray(x)?x:[];
+ const by=new Map(state.tasks.map(t=>[t.id,t]));
+ const rootOf=t=>{let c=t,n=0;while(c.parentId&&by.has(c.parentId)&&n++<10)c=by.get(c.parentId);return c.id;};
+ const uf=new Map();
+ const find=x=>{while(uf.get(x)!==x){uf.set(x,uf.get(uf.get(x)));x=uf.get(x);}return x;};
+ state.tasks.forEach(t=>{const r=rootOf(t);if(!uf.has(r))uf.set(r,r);});
+ state.tasks.forEach(t=>A(t.deps).forEach(d=>{
+  const p=by.get(d);
+  if(!p||p.projectId!==t.projectId)return;
+  const a=find(rootOf(t)),b=find(rootOf(p));
+  if(a!==b)uf.set(a,b);
+ }));
+ const order=new Map();
+ let prev=null;
+ rows.forEach(r=>{
+  const t=by.get(r.querySelector('.bar').dataset.id);
+  if(!t)return;
+  const k=find(rootOf(t));
+  if(!order.has(k))order.set(k,order.size);
+  const h=HU[order.get(k)%HU.length];
+  r.dataset.bh=h;
+  r.style.setProperty('--bh',h);
+  r.classList.toggle('bsep',prev!==null&&prev!==k);
+  prev=k;
+ });
+}
 function addBtn(){
  const c=g('content');
  if(!c)return;
@@ -20,9 +55,14 @@ function addBtn(){
 const oR=render;
 render=function(){
  const r=oR.apply(this,arguments);
- setTimeout(()=>{try{addBtn();}catch(e){}},0);
+ setTimeout(()=>{try{addBtn();}catch(e){}try{sepPaint();}catch(e){}},0);
  return r;
 };
+const cont=g('content');
+if(cont){
+ let tm=0;
+ new MutationObserver(()=>{clearTimeout(tm);tm=setTimeout(()=>{try{sepPaint();}catch(e){}},120);}).observe(cont,{childList:true,subtree:true});
+}
 const isEmpty=()=>!!document.querySelector('[data-smode="empty"].on');
 function sync(){
  const own=g('smr_own');
@@ -31,8 +71,8 @@ function sync(){
  own.classList.toggle('hidden',!e);
  const sum=g('smr_sum');
  if(sum)sum.classList.toggle('hidden',e);
- const st=g('smr_start'),en=g('smr_end');
- if(e&&st&&en&&!en.dataset.touched&&st.value)en.value=plus(st.value,6);
+ const s=g('smr_start'),en=g('smr_end');
+ if(e&&s&&en&&!en.dataset.touched&&s.value)en.value=plus(s.value,6);
 }
 function setup(){
  const sum=g('smr_sum');
