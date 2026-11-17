@@ -2,6 +2,7 @@
 (function(){
 if(typeof document==='undefined'||typeof transport!=='function')return;
 const LABEL={state:'Загружаем объекты и задачи',taskCreate:'Создаём задачу',taskUpdate:'Сохраняем изменения задачи',taskUpdateBatch:'Сохраняем статусы задач',taskDelete:'Удаляем задачу',projectCreate:'Создаём объект',projectUpdate:'Сохраняем настройки объекта',projectDelete:'Удаляем объект',userSave:'Сохраняем доступ пользователя',login:'Входим в систему',requestCode:'Отправляем код на почту',verifyCode:'Проверяем код',register:'Отправляем заявку',setPassword:'Сохраняем пароль',logout:'Выходим',sectionSet:'Переносим задачу в раздел',chatSend:'Отправляем сообщение'};
+const FL={personalEnsure:'Открываем ваше личное пространство',supplyGet:'Загружаем комплектацию',supplyDo:'Сохраняем изменения в комплектации',supplySave:'Сохраняем комплектацию',supplyCat:'Загружаем справочник закупок'};
 const QUIET=new Set(['ping','syncPull','tplMap','tplSet','batch']);
 const FACTS=[
 'Золотое сечение (≈1,618) дизайнеры используют для пропорций с античных времён.',
@@ -112,7 +113,7 @@ const box=document.createElement('div');
 box.id='busybar';
 box.setAttribute('role','status');
 document.body.appendChild(box);
-let rows=[],timer=0,seq=0,shown=false,shownAt=0,factAt=0,lingerUntil=0,sig='',factI=Math.floor(Math.random()*FACTS.length),built=false,elT,elU,elS,elF;
+let rows=[],timer=0,seq=0,inF=0,netN=0,netT=0,shown=false,shownAt=0,factAt=0,lingerUntil=0,sig='',factI=Math.floor(Math.random()*FACTS.length),built=false,elT,elU,elS,elF;
 function blocked(){try{return typeof working!=='undefined'&&working===true;}catch(e){return false;}}
 function logo(on){document.querySelectorAll('.brand').forEach(b=>b.classList.toggle('loading',on));}
 function build(){
@@ -123,12 +124,15 @@ function build(){
 function paint(){
  const now=Date.now(),dlg=document.getElementById('dialog'),own=dlg&&dlg.open&&dlg.querySelector('.nbp');
  const waiting=rows.filter(r=>r.st==='wait');
- const blk=blocked()&&!own&&waiting.some(r=>now-r.t>350);
- logo(!blk&&waiting.some(r=>now-r.t>250));
+ const virt=(netN>0&&!waiting.length&&now-netT>1500)?[{id:'net',t:netT,st:'wait',hard:true,label:'Ждём ответ сервера'}]:[];
+ const allW=waiting.concat(virt);
+ const hard=allW.some(r=>r.hard&&now-r.t>350);
+ const blk=(blocked()||hard)&&!own&&allW.some(r=>now-r.t>350);
+ logo(!blk&&allW.some(r=>now-r.t>250));
  const vis=blk||(shown&&now<lingerUntil);
  if(!vis){
   shown=false;built=false;
-  if(!waiting.length){rows=[];if(timer){clearInterval(timer);timer=0;}}
+  if(!allW.length&&!netN){rows=[];if(timer){clearInterval(timer);timer=0;}}
   box.className='';
   return;
  }
@@ -137,12 +141,12 @@ function paint(){
  if(box.parentNode!==host){host.appendChild(box);built=false;}
  if(!built)build();
  box.className='on';
- const list=rows.slice(-6),s=list.map(r=>r.id+r.st).join(',');
+ const list=rows.slice(-6).concat(virt),s=list.map(r=>r.id+r.st).join(',');
  if(s!==sig){
   sig=s;
   elU.innerHTML=list.map(r=>'<li class="'+r.st+'"><i>'+(r.st==='ok'?'✓':r.st==='err'?'✕':'<u></u>')+'</i><span>'+r.label+'</span></li>').join('');
  }
- elT.textContent=waiting.length?'Загружаем данные…':'Готово';
+ elT.textContent=allW.length?'Загружаем данные…':'Готово';
  const sec=Math.round((now-shownAt)/1000);
  elS.textContent=sec>=8?'Сервер отвечает медленно, это нормально для Google Apps Script. Не закрывайте страницу.':'';
  if(now-shownAt>2500){
@@ -152,10 +156,15 @@ function paint(){
   elF.style.display='block';
  }
 }
+function fin(j,stt){
+ j.st=stt;
+ if(shown)lingerUntil=Date.now()+900;
+ paint();
+}
 const oT=transport;
 transport=async function(req){
  const a=req&&req.action;
- if(QUIET.has(a))return oT.apply(this,arguments);
+ if(QUIET.has(a)||inF>0)return oT.apply(this,arguments);
  const j={id:++seq,t:Date.now(),label:LABEL[a]||'Работаем с сервером',st:'wait'};
  rows.push(j);
  if(!timer)timer=setInterval(paint,300);
@@ -168,10 +177,35 @@ transport=async function(req){
   throw e;
  }finally{
   if(j.st==='ok'&&a==='state')rows.push({id:++seq,t:Date.now(),label:'Обновляем экран',st:'ok'});
-  if(shown)lingerUntil=Date.now()+900;
-  paint();
+  fin(j,j.st);
  }
 };
+const D=window.DIO;
+if(D&&typeof D.fcall==='function'){
+ const of=D.fcall;
+ D.fcall=function(name){
+  const j={id:++seq,t:Date.now(),label:FL[name]||LABEL[name]||'Работаем с сервером',st:'wait',hard:true};
+  rows.push(j);
+  inF++;
+  if(!timer)timer=setInterval(paint,300);
+  const end=s=>{inF=Math.max(0,inF-1);fin(j,s);};
+  let p;
+  try{p=Promise.resolve(of.apply(this,arguments));}catch(e){end('err');throw e;}
+  return p.then(r=>{end('ok');return r;},e=>{end('err');throw e;});
+ };
+}
+if(typeof window.fetch==='function'&&window.STUDIO_API){
+ const of2=window.fetch,pre=String(window.STUDIO_API).slice(0,40);
+ window.fetch=function(u){
+  const url=String((u&&u.url)||u||'');
+  if(url.indexOf(pre)!==0)return of2.apply(this,arguments);
+  if(!netN)netT=Date.now();
+  netN++;
+  if(!timer)timer=setInterval(paint,300);
+  const dn=()=>{netN=Math.max(0,netN-1);};
+  return of2.apply(this,arguments).then(r=>{dn();return r;},e=>{dn();throw e;});
+ };
+}
 const sb=document.getElementById('syncbar');
 if(sb){
  const re=/^(Загружаем данные|Сервер отвечает|Обновляем экран)/;

@@ -137,19 +137,13 @@ function ganttHtml(ts,min,max,DAY){
  return '<div class="mygantt"><div class="gantt-scroll"><div class="gantt" style="width:'+(w+lw)+'px"><div class="grow ghead"><div class="glabel">Задача</div><div class="track" style="width:'+w+'px">'+ticks+mon+'</div></div>'+body+tl+'</div></div></div>';
 }
 function first(d){return d.slice(0,8)+'01';}
-function page(){
- if(!state||view!=='projects'||!projectId)return;
- const p=state.projects.find(x=>x.id===projectId);
- if(!isP(p))return;
- const c=document.getElementById('content');
- if(!c)return;
- const own=owner(p),mine=own===state.me.id,sc=LS('dwPScale')||'week';
- const ts=state.tasks.filter(t=>t.projectId===projectId);
+function section(ts,allMode){
+ const sc=LS('dwPScale')||'week';
  let body,label,a0,b0;
  if(sc==='day'){
   a0=anchor;b0=anchor;
   label=fd(anchor)+'.'+anchor.slice(0,4)+', '+WD[dow(anchor)];
-  body=dayHtml(ts,anchor);
+  body=allMode?'<p class="notice">Для режима «День» выберите одного сотрудника в списке «Чьи задачи».</p>':dayHtml(ts,anchor);
  }else if(sc==='month'){
   a0=first(anchor);b0=plus(plus(a0,32).slice(0,8)+'01',-1);
   label=MON[+a0.slice(5,7)-1]+' '+a0.slice(0,4);
@@ -160,7 +154,48 @@ function page(){
   body=ganttHtml(ts,a0,b0,64);
  }
  const list=tree(ts.filter(t=>t.end>=a0&&t.start<=b0));
- c.innerHTML='<div class="ppage"><h2>'+esc(p.name)+'</h2><p class="muted">'+(mine?'Ваше личное пространство: видите только вы и руководитель.':'Личное пространство сотрудника: '+esc(name(own))+'. Задача, созданная здесь, назначается ему.')+'</p><div class="toolbar"><button class="primary" data-pnew="1">+ Задача</button><button data-action="refresh">Обновить</button></div><div class="pscale">'+[['day','День'],['week','Неделя'],['month','Месяц']].map(x=>'<button type="button" data-pscale="'+x[0]+'" class="'+(x[0]===sc?'on':'')+'">'+x[1]+'</button>').join('')+'</div><div class="pnav"><button type="button" data-pnav="-1">◀</button><b>'+label+'</b><button type="button" data-pnav="0">Сегодня</button><button type="button" data-pnav="1">▶</button></div>'+body+'<h3>Задачи</h3><div class="plist">'+(list.map(r=>'<div style="margin-left:'+(Math.min(r[1],3)*18)+'px">'+card(r[0])+'</div>').join('')||'<p class="notice">В этом периоде задач нет.</p>')+'</div></div>';
+ return '<div class="pscale">'+[['day','День'],['week','Неделя'],['month','Месяц']].map(x=>'<button type="button" data-pscale="'+x[0]+'" class="'+(x[0]===sc?'on':'')+'">'+x[1]+'</button>').join('')+'</div><div class="pnav"><button type="button" data-pnav="-1">◀</button><b>'+label+'</b><button type="button" data-pnav="0">Сегодня</button><button type="button" data-pnav="1">▶</button></div>'+body+'<h3>Задачи</h3><div class="plist">'+(list.map(r=>'<div style="margin-left:'+(Math.min(r[1],3)*18)+'px">'+card(r[0])+'</div>').join('')||'<p class="notice">В этом периоде задач нет.</p>')+'</div>';
+}
+function dl(t){
+ if(t.status!=='В работе')return '';
+ const d=days(today(),hrs(t)?t.start:t.end);
+ return d<0?'dl-fire':d===0?'dl-r':d<=2?'dl-y':'dl-g';
+}
+function paintCards(root){
+ const by=new Map(state.tasks.map(t=>[t.id,t]));
+ root.querySelectorAll('.card[data-drag]').forEach(cd=>{
+  const t=by.get(cd.dataset.drag);
+  if(!t)return;
+  const k=dl(t);
+  if(k){cd.classList.add(k);if(k==='dl-fire')cd.classList.add('burn');}
+ });
+}
+function page(){
+ if(!state||view!=='projects'||!projectId)return;
+ const p=state.projects.find(x=>x.id===projectId);
+ if(!isP(p))return;
+ const c=document.getElementById('content');
+ if(!c)return;
+ const own=owner(p),mine=own===state.me.id;
+ const ts=state.tasks.filter(t=>t.projectId===projectId);
+ c.innerHTML='<div class="ppage"><h2>'+esc(p.name)+'</h2><p class="muted">'+(mine?'Ваше личное пространство: видите только вы и руководитель.':'Личное пространство сотрудника: '+esc(name(own))+'. Задача, созданная здесь, назначается ему.')+'</p><div class="toolbar"><button class="primary" data-pnew="1">+ Задача</button><button data-action="refresh">Обновить</button></div>'+section(ts,false)+'</div>';
+ paintCards(c);
+}
+function mineTasks(){
+ if(!state||view!=='tasks')return;
+ const c=document.getElementById('content'),tb=c&&c.querySelector('.toolbar');
+ if(!tb||c.querySelector('.ppage'))return;
+ const ws=document.getElementById('whoSel'),w=ws?ws.value:'me',fp=document.getElementById('filterProject'),pf=fp?fp.value:'';
+ const per=document.getElementById('period');
+ if(per)per.remove();
+ let n=tb.nextElementSibling;
+ while(n){const x=n.nextElementSibling;n.remove();n=x;}
+ const ts=state.tasks.filter(t=>(w==='all'?!!t.assigneeId:t.assigneeId===(w==='me'?state.me.id:w))&&(!pf||t.projectId===pf));
+ const d=document.createElement('div');
+ d.className='ppage';
+ d.innerHTML=section(ts,w==='all');
+ tb.after(d);
+ paintCards(d);
 }
 async function shift(id,d){
  const tk=state.tasks.find(x=>x.id===id),sl=slotMap().get(id);
@@ -234,11 +269,16 @@ document.addEventListener('click',e=>{
   setTimeout(()=>{const a=document.getElementById('f_assignee'),o=owner(p);if(a&&o)a.value=o;},60);
  }
 });
+document.addEventListener('change',e=>{
+ const el=e.target;
+ if(el&&(el.id==='whoSel'||el.id==='filterProject')&&view==='tasks')setTimeout(()=>{try{render();}catch(x){}},0);
+});
 const oR=render;
 render=function(){
  const r=oR.apply(this,arguments);
  try{objects();}catch(e){}
  try{page();}catch(e){}
+ try{mineTasks();}catch(e){}
  return r;
 };
 if(typeof state!=='undefined'&&state)render();
