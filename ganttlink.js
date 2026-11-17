@@ -33,13 +33,9 @@ function paint(){
   prev=k;
  });
 }
-function links(){
- const box=document.querySelector('.mygantt .gantt');
- if(!box||typeof state==='undefined'||!state||!state.tasks)return;
- const old=box.querySelector('.mylinks');
+function drawLinks(box,bars){
+ const old=box.querySelector('svg.mylinks');
  if(old)old.remove();
- const bars=new Map();
- box.querySelectorAll('.bar[data-id]').forEach(b=>bars.set(b.dataset.id,b));
  const gr=box.getBoundingClientRect();
  if(bars.size<2||!gr.width)return;
  if(getComputedStyle(box).position==='static')box.style.position='relative';
@@ -63,20 +59,47 @@ function links(){
   }
  });
  if(!solid&&!dash)return;
- box.insertAdjacentHTML('beforeend','<svg class="mylinks" width="'+gr.width+'" height="'+gr.height+'" style="position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:3"><defs><marker id="mlarr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#5b6dd8"/></marker></defs><path d="'+dash+'" fill="none" stroke="#8f99d9" stroke-width="1.3" stroke-dasharray="4 3"/><path d="'+solid+'" fill="none" stroke="#5b6dd8" stroke-width="1.6" marker-end="url(#mlarr)"/></svg>');
+ box.insertAdjacentHTML('beforeend','<svg class="mylinks" width="'+gr.width+'" height="'+gr.height+'" style="position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:1"><defs><marker id="mlarr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#5b6dd8"/></marker></defs><path d="'+dash+'" fill="none" stroke="#8f99d9" stroke-width="1.3" stroke-dasharray="4 3"/><path d="'+solid+'" fill="none" stroke="#5b6dd8" stroke-width="1.6" marker-end="url(#mlarr)"/></svg>');
+}
+function links(){
+ const box=document.querySelector('.mygantt .gantt');
+ if(!box||typeof state==='undefined'||!state||!state.tasks)return;
+ const bars=new Map();
+ box.querySelectorAll('.bar[data-id]').forEach(b=>bars.set(b.dataset.id,b));
+ drawLinks(box,bars);
+}
+function anLinks(){
+ const g=document.querySelector('.an-g');
+ if(!g||typeof state==='undefined'||!state||!state.tasks)return;
+ const idx=new Map();
+ state.tasks.forEach(t=>idx.set(t.title+'|'+t.start+'|'+t.end,t));
+ const bars=new Map();
+ g.querySelectorAll('.an-row:not(.proj) .an-b[title]').forEach(b=>{
+  const p=String(b.getAttribute('title')).split(' • ');
+  if(p.length<2)return;
+  const dd=p[1].split(' — ');
+  if(dd.length<2)return;
+  const t=idx.get(p[0]+'|'+dd[0]+'|'+dd[1]);
+  if(t&&!bars.has(t.id))bars.set(t.id,b);
+ });
+ drawLinks(g,bars);
 }
 const oR=render;
 render=function(){
  const r=oR.apply(this,arguments);
- setTimeout(()=>{try{paint();}catch(e){}try{links();}catch(e){}},60);
+ setTimeout(()=>{try{paint();}catch(e){}try{links();}catch(e){}try{anLinks();}catch(e){}},60);
  return r;
 };
 const cont=document.getElementById('content');
 if(cont){
  let tm=0;
- new MutationObserver(()=>{clearTimeout(tm);tm=setTimeout(()=>{try{paint();}catch(e){}},200);}).observe(cont,{childList:true,subtree:true});
+ new MutationObserver(ms=>{
+  if(ms.every(m=>[...m.addedNodes,...m.removedNodes].every(n=>n.nodeType===1&&n.classList.contains('mylinks'))))return;
+  clearTimeout(tm);
+  tm=setTimeout(()=>{try{paint();}catch(e){}try{anLinks();}catch(e){}},200);
+ }).observe(cont,{childList:true,subtree:true});
  document.addEventListener('toggle',e=>{if(e.target&&e.target.classList&&e.target.classList.contains('mygantt'))setTimeout(()=>{try{links();}catch(x){}},50);},true);
- window.addEventListener('resize',()=>{try{links();}catch(x){}});
+ window.addEventListener('resize',()=>{try{links();}catch(x){}try{anLinks();}catch(x){}});
 }
 const NL=String.fromCharCode(10);
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
