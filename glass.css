@@ -4,7 +4,7 @@
 
 :root{
   --ruby:#991720;--ruby-2:#7d1416;--ruby-3:#66120f;--silver:#cfcfcf;
-  --bg:#f4f0ef;--panel:rgba(255,255,255,.64);--panel-solid:#fbf8f7;
+  --bg:#f4f0ef;--panel:rgba(255,255,255,.64);--panel-solid:#fbf8f7;--float:rgba(252,250,249,.96);
   --ink:#1d1d1b;--muted:#6a6360;--line:rgba(29,29,27,.11);
   --accent:#991720;--accent-text:#8a131c;--soft:rgba(153,23,32,.09);
   --danger:#c53a1f;--ok:#2e7d5a;
@@ -17,7 +17,7 @@
   --ease:cubic-bezier(.2,.8,.2,1);
 }
 html[data-theme=dark]{
-  --bg:#141112;--panel:rgba(44,37,38,.60);--panel-solid:#221d1e;
+  --bg:#141112;--panel:rgba(44,37,38,.60);--panel-solid:#221d1e;--float:rgba(38,32,33,.96);
   --ink:#f5f0ef;--muted:#b4aaa8;--line:rgba(255,255,255,.11);
   --accent:#b3202b;--accent-text:#ff8b93;--soft:rgba(255,120,128,.14);
   --danger:#ff8a6b;--ok:#5fc08f;
@@ -83,7 +83,7 @@ label{color:var(--muted);font-weight:500}
 .column{background:rgba(255,255,255,.26);border:1px solid var(--glass-bd);border-radius:var(--r-l)}
 html[data-theme=dark] .column{background:rgba(255,255,255,.04)}
 .badge{background:var(--soft);color:var(--accent-text);border-radius:999px;padding:2px 9px;font-weight:600}
-.menu{background:var(--panel);border:1px solid var(--glass-bd);border-radius:var(--r-m);
+.menu{background:var(--float);border:1px solid var(--glass-bd);border-radius:var(--r-m);
   -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--sh-2)}
 .menu button{background:transparent;box-shadow:none;border:0;border-radius:10px}
 .menu button:hover{background:var(--soft)}
@@ -92,15 +92,21 @@ html[data-theme=dark] .column{background:rgba(255,255,255,.04)}
 .overdue{border-left:1px solid var(--glass-bd);background:color-mix(in srgb,var(--danger) 9%,var(--panel));
   box-shadow:0 0 0 1px color-mix(in srgb,var(--danger) 30%,transparent),var(--sh-1)}
 
-/* Окна и уведомления */
-dialog{background:var(--panel);border:1px solid var(--glass-bd);border-radius:26px;
+/* Окна и уведомления. Всплывающие окна лежат поверх другого текста — подложка почти непрозрачная (--float), иначе текст сливается. */
+dialog{background:var(--float);border:1px solid var(--glass-bd);border-radius:26px;
   -webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:var(--sh-2)}
-html:not([data-theme=dark]) dialog{background:rgba(255,255,255,.80)}
 dialog::backdrop{background:rgba(25,10,12,.34);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
-#message{background:rgba(29,29,27,.86);color:#fff;border-radius:var(--r-m);
+#message{background:rgba(29,29,27,.92);color:#fff;border-radius:var(--r-m);
   -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
-html[data-theme=dark] #message{background:rgba(70,60,62,.88)}
+html[data-theme=dark] #message{background:rgba(70,60,62,.94)}
 #bar{background:var(--accent);box-shadow:0 0 8px rgba(153,23,32,.5)}
+
+/* Плашка «Загружаем данные…» (busy.js) и уведомления о задачах (notify.js): плотная подложка, без цветной полосы слева.
+   Селекторы усилены (html body …), потому что эти файлы добавляют свои стили позже. */
+html body #busybar,html body .alert{background:var(--float);border:1px solid var(--glass-bd);border-left:1px solid var(--glass-bd);
+  border-radius:var(--r-m);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--sh-2)}
+html[data-theme=dark] body #busybar,html[data-theme=dark] body .alert{border-color:rgba(255,255,255,.16)}
+html body .alert span.pj{color:var(--accent-text)}
 
 /* Диаграмма Ганта: липкие подписи — только непрозрачные, иначе текст просвечивает при прокрутке */
 .gantt-scroll{background:var(--panel-solid);border:1px solid var(--glass-bd);border-radius:var(--r-l);box-shadow:var(--sh-1)}
