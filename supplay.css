@@ -1,0 +1,66 @@
+/* Комплектация: компактная адаптивная вёрстка */
+#content .sp-item,#content .st-type,#content .sp-tot,#content .st-sum{max-width:1100px}
+#content .sp-item{padding:10px 12px;margin:8px 0}
+#content .st-type{padding:10px 12px;margin:10px 0}
+#content .st-stage{padding:8px 10px;margin:8px 0}
+#content .sp-head{gap:6px;margin-bottom:6px}
+#content .sp-head b{font-size:15px;line-height:1.3}
+#content .sp-head small{color:var(--muted);font-size:12px}
+#content .sp-act{gap:4px}
+#content .sp-act button,#content .st-add>button,#content .sp-item>button,#content .toolbar button{min-height:32px;padding:4px 10px;font-size:13px}
+#content .toolbar{gap:6px;flex-wrap:wrap}
+#content .toolbar input{min-height:32px;padding:4px 8px;font-size:13px}
+#content .ppage h3,#content h3{margin:14px 0 6px;font-size:15px}
+#content .sp-offer{grid-template-columns:minmax(100px,1fr) minmax(120px,1.4fr) auto auto;padding:6px 10px;margin:4px 0;gap:6px 10px;font-size:13px}
+#content .sp-co{font-size:14px}
+#content .sp-am{font-size:14px}
+#content .sp-sum{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
+#content .sp-sum label{font-size:12px}
+#content .sp-sum input{min-height:32px;padding:4px 8px;font-size:14px}
+#content .sp-tot{padding:10px 12px;gap:8px;margin-top:12px}
+#content .sp-tot b{font-size:16px}
+#content .st-sum{padding:6px 10px;font-size:13px;line-height:1.5}
+#content .st-row{gap:6px 8px;padding:5px 0;font-size:13px}
+#content .st-row input[type=date],#content .sd-f input{min-height:32px;height:32px;padding:2px 6px;font-size:13px}
+#content .st-sh input[type=date]{min-height:32px;height:32px;padding:2px 6px;font-size:13px}
+#content .sd-row{max-width:520px;gap:8px;margin:0 0 8px}
+#content .sd-f small{min-height:0;font-size:11px}
+#content .sd-f b{font-size:10px}
+#content .st-add{margin-top:10px;padding-top:8px}
+#content .st-add>b{font-size:13px}
+@media(max-width:900px){
+ #content .st-row.a{grid-template-columns:minmax(100px,1.4fr) 120px 120px repeat(3,minmax(64px,.7fr)) minmax(64px,.7fr) auto}
+}
+@media(max-width:760px){
+ #content .sp-item,#content .st-type{padding:8px 10px}
+ #content .sp-offer{grid-template-columns:1fr auto;grid-template-areas:'co am' 'fl fl' 'ac ac'}
+ #content .sp-offer .sp-co{grid-area:co}
+ #content .sp-offer .sp-am{grid-area:am}
+ #content .sp-offer .sp-fl{grid-area:fl}
+ #content .sp-offer .sp-act{grid-area:ac;margin-left:0}
+ #content .sp-offer .sp-act button{flex:1 1 auto}
+ #content .st-row,#content .st-row.a{grid-template-columns:1fr 1fr;gap:4px 10px;padding:8px 0;border-top:1px solid var(--line)}
+ #content .st-row>div:first-child{grid-column:1/-1;font-weight:600;font-size:14px}
+ #content .st-row>div.r{text-align:left;white-space:normal}
+ #content .st-row>div:nth-child(2),#content .st-row>div:nth-child(3):not(.r),#content .st-row>div:nth-child(8),#content .st-row>div:last-child{min-width:0}
+ #content .st-row>div:last-child{grid-column:1/-1}
+ #content .st-row>div:last-child .sp-act{margin-left:0}
+ #content .st-row>div.r::before{display:block;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted)}
+ #content .st-row:not(.a)>div:nth-child(3)::before{content:'Смета'}
+ #content .st-row:not(.a)>div:nth-child(4)::before{content:'Скидка'}
+ #content .st-row:not(.a)>div:nth-child(5)::before{content:'Партнёрские'}
+ #content .st-row:not(.a)>div:nth-child(6)::before{content:'Итого'}
+ #content .st-row.a>div:nth-child(4)::before{content:'Смета'}
+ #content .st-row.a>div:nth-child(5)::before{content:'Скидка'}
+ #content .st-row.a>div:nth-child(6)::before{content:'Партнёрские'}
+ #content .st-row.a>div:nth-child(7)::before{content:'Итого'}
+ #content .st-row.a>div:nth-child(2)::before{content:'Оплата';display:block;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted)}
+ #content .st-row.a>div:nth-child(3)::before{content:'Доставка';display:block;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted)}
+ #content .st-row:not(.a)>div:nth-child(2)::before{content:'Куплено';display:block;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted)}
+ #content .st-row.a>div:nth-child(8)::before{content:'Файл';display:block;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted)}
+ #content .st-sh{gap:6px}
+ #content .st-sh .sp-act{margin-left:0;width:100%}
+ #content .sp-tot{grid-template-columns:1fr 1fr}
+ #content .sd-row{grid-template-columns:1fr 1fr;max-width:none}
+ #content .toolbar input{max-width:none!important;flex:1 1 100%}
+}
