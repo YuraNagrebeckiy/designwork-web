@@ -4,7 +4,7 @@ window.STUDIO_API = 'https://script.google.com/macros/s/AKfycbyS2UbVSa_ZYzQ5jf1Z
 // Быстрая загрузка: модули скачиваются одновременно, выполняются строго по порядку,
 // экран скрыт и показывается один раз, когда всё готово (без промежуточных перерисовок).
 // Порядок: features, members, touch, analytics, work, plan, fire, cal, ins, obj, keep, web, drive, files, mood, board,
-// moodfix, ganttadd, supply, supplycat, supplyfix, supplydates, personal, sections, overview, hier, mobile, ui, final, harden, dialog, branch, secfix, newobj, newobj2, newobj3, smr, tpls, team, tplfix, smrlog, ganttlink, pspace, autoplan, lib, queue, busy.
+// moodfix, ganttadd, supply, supplycat, supplyfix, supplydates, personal, sections, overview, hier, mobile, ui, final, harden, dialog, branch, secfix, newobj, newobj2, newobj3, smr, tpls, team, tplfix, smrlog, ganttlink, pspace, autoplan, dayadd, lib, queue, busy.
 (function () {
   var root = document.documentElement;
   root.classList.add('booting');
@@ -15,7 +15,7 @@ window.STUDIO_API = 'https://script.google.com/macros/s/AKfycbyS2UbVSa_ZYzQ5jf1Z
   calm.rel = 'stylesheet';
   calm.href = 'calm.css?v=' + Math.floor(Date.now() / 300000);
   document.head.appendChild(calm);
-  var files = ['features.js', 'members.js', 'touch.js', 'analytics.js', 'work.js', 'plan.js', 'fire.js', 'cal.js', 'ins.js', 'obj.js', 'keep.js', 'web.js', 'drive.js', 'files.js', 'mood.js', 'board.js', 'moodfix.js', 'ganttadd.js', 'supply.js', 'supplycat.js', 'supplyfix.js', 'supplydates.js', 'personal.js', 'sections.js', 'overview.js', 'hier.js', 'mobile.js', 'ui.js', 'final.js', 'harden.js', 'dialog.js', 'branch.js', 'secfix.js', 'newobj.js', 'newobj2.js', 'newobj3.js', 'smr.js', 'tpls.js', 'team.js', 'tplfix.js', 'smrlog.js', 'ganttlink.js', 'pspace.js', 'autoplan.js', 'lib.js', 'queue.js', 'busy.js'];
+  var files = ['features.js', 'members.js', 'touch.js', 'analytics.js', 'work.js', 'plan.js', 'fire.js', 'cal.js', 'ins.js', 'obj.js', 'keep.js', 'web.js', 'drive.js', 'files.js', 'mood.js', 'board.js', 'moodfix.js', 'ganttadd.js', 'supply.js', 'supplycat.js', 'supplyfix.js', 'supplydates.js', 'personal.js', 'sections.js', 'overview.js', 'hier.js', 'mobile.js', 'ui.js', 'final.js', 'harden.js', 'dialog.js', 'branch.js', 'secfix.js', 'newobj.js', 'newobj2.js', 'newobj3.js', 'smr.js', 'tpls.js', 'team.js', 'tplfix.js', 'smrlog.js', 'ganttlink.js', 'pspace.js', 'autoplan.js', 'dayadd.js', 'lib.js', 'queue.js', 'busy.js'];
   var booting = true, pendingState = null, saved = null, finished = false;
   function finish() {
     if (finished) return;
