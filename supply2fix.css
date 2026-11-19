@@ -1,0 +1,26 @@
+/* Комплектация на ПК: карточки позиций на всю ширину, данные не сжимаются */
+html body .s2{max-width:none}
+html body .s2-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,960px),1fr))}
+html body .s2-a{grid-template-columns:minmax(200px,1.6fr) 110px 110px 110px 100px 110px 120px auto}
+@container (min-width:761px) and (max-width:960px){
+ html body .s2-offer{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:9px 10px}
+ html body .s2-offer .s2-tx{grid-column:1/-1}
+ html body .s2-offer .s2-oa{grid-column:1/-1;justify-content:flex-start}
+ html body .s2-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px}
+ html body .s2-a.h{display:none}
+ html body .s2-a{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;padding:8px 0}
+ html body .s2-a>:first-child{flex:1 0 100%;font-size:14px;font-weight:600}
+ html body .s2-a>[data-l]{font-size:12px}
+ html body .s2-a>[data-l]::before{content:attr(data-l) ': ';display:inline;color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;font-weight:400}
+ html body .s2-a small{display:inline;margin-left:4px}
+ html body .s2-a .r{text-align:left}
+ html body .s2-a .s2-oa{margin-left:auto}
+}
+@container (min-width:961px){
+ html body .s2-fields{grid-template-columns:repeat(auto-fill,minmax(140px,230px))}
+}
+@media(min-width:1500px){
+ html body .s2-item{padding:18px 20px}
+ html body .s2-t b{font-size:17px}
+ html body .s2-fields{gap:14px}
+}
