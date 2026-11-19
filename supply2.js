@@ -2,18 +2,20 @@
 (function(){
 const D=window.DIO;
 if(!D||typeof showForm==='undefined')return;
-const MARK='@поз:',META='META:';
+const MARK='@поз:',META='META:',NOTE_T='@н:';
 const st=document.createElement('style');
 st.textContent=`
-.s2{max-width:1100px}
+.s2{max-width:1600px;margin:0 auto;width:100%}
 .s2 *{box-sizing:border-box}
-.s2-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}
+main:has(.s2),#content:has(.s2){max-width:none!important}
+.s2-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
 .s2-bar input{flex:1 1 260px;min-width:0}
 .s2-bar button{flex:none}
-.s2-g{margin:22px 0 8px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.s2-g{margin:20px 0 8px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .s2-g h3{margin:0;font-size:15px}
 .s2-g small{color:var(--muted)}
-.s2-item{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:14px;margin:10px 0}
+.s2-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(540px,1fr));gap:12px;align-items:start}
+.s2-item{container-type:inline-size;border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:14px;margin:0;min-width:0}
 .s2-h{display:flex;align-items:center;gap:10px}
 .s2-dot{width:12px;height:12px;border-radius:50%;flex:none;background:#b5584f}
 .s2-dot.wait{background:#d1a93a}.s2-dot.ok{background:#4d8765}
@@ -21,6 +23,9 @@ st.textContent=`
 .s2-t b{display:block;font-size:16px;line-height:1.3;overflow-wrap:anywhere}
 .s2-ha{display:flex;gap:6px;flex:none}
 .s2-ha button,.s2-oa button{min-width:36px;min-height:36px;padding:4px 10px}
+.s2-note{display:block;margin:10px 0 0}
+.s2-note>span{display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.s2-note textarea{display:block;width:100%;min-height:40px;max-height:260px;resize:vertical;font-size:13px;line-height:1.45;padding:8px 10px}
 .s2-hint{margin:8px 0 0;font-size:13px}
 .s2-hint summary{cursor:pointer;color:var(--accent-text,var(--accent))}
 .s2-hint dl{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;margin:8px 0 0}
@@ -28,7 +33,7 @@ st.textContent=`
 .s2-hint dd{margin:0;line-height:1.45}
 .s2-tend{margin-top:10px;display:grid;gap:8px}
 .s2-cap{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:12px 0 2px}
-.s2-offer{display:grid;grid-template-columns:minmax(0,1.2fr) 130px minmax(0,2.4fr) auto;gap:6px 14px;align-items:start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:color-mix(in srgb,var(--panel-solid,#fff) 50%,transparent)}
+.s2-offer{display:grid;grid-template-columns:minmax(0,1fr) 120px minmax(0,2fr) auto;gap:6px 14px;align-items:start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:color-mix(in srgb,var(--panel-solid,#fff) 50%,transparent)}
 .s2-co{font-weight:650;overflow-wrap:anywhere}
 .s2-pr{font-weight:650;white-space:nowrap}
 .s2-tx{font-size:13px;line-height:1.45;overflow-wrap:anywhere}
@@ -36,26 +41,24 @@ st.textContent=`
 .s2-tx a{margin-right:8px}
 .s2-oa{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .s2-win{margin-top:10px;border:1px solid color-mix(in srgb,#4d8765 40%,transparent);border-left:4px solid #4d8765;border-radius:12px;padding:12px;background:color-mix(in srgb,#4d8765 7%,transparent)}
-.s2-wh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.s2-badge{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#1f3d2d;background:#dcebe2;border-radius:999px;padding:3px 10px}
+.s2-wh{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap}
+.s2-badge{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#1f3d2d;background:#dcebe2;border-radius:999px;padding:3px 10px;white-space:nowrap}
 html[data-theme=dark] .s2-badge{background:#27392f;color:#d6ece0}
-.s2-wh b{font-size:15px}
+.s2-wh b{font-size:15px;overflow-wrap:anywhere}
 .s2-wh .sp{flex:1}
-.s2-fields{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:12px}
+.s2-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:12px}
 .s2-f{display:flex;flex-direction:column;gap:3px;min-width:0}
 .s2-f>span,.s2-a [data-l]::before{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .s2-f>b{font-size:15px;min-height:38px;display:flex;align-items:center}
 .s2-f input{width:100%;min-width:0;min-height:38px;height:38px}
 .s2-addh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 4px}
-.s2-a{display:grid;grid-template-columns:minmax(0,1.6fr) 130px 130px 110px 100px 110px 120px auto;gap:6px 10px;align-items:center;border-top:1px solid var(--line);padding:8px 0;font-size:13px}
+.s2-a{display:grid;grid-template-columns:minmax(0,1.5fr) 100px 100px 100px 90px 100px 110px auto;gap:6px 10px;align-items:center;border-top:1px solid var(--line);padding:8px 0;font-size:13px}
 .s2-a.h{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-top:0;padding-bottom:2px}
 .s2-a [data-l]::before{content:none}
 .s2-a .r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .s2-a small{display:block;color:var(--muted)}
-.s2-a input{width:100%;min-height:36px;height:36px}
 .s2-ft{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
-.s2-ft .sp{flex:1}
-.s2-blk{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;justify-content:flex-end;padding:10px 12px;border-radius:12px;background:var(--soft);margin-top:10px;font-size:13px;color:var(--muted)}
+.s2-blk{display:flex;gap:6px 18px;flex-wrap:wrap;align-items:baseline;justify-content:flex-end;padding:10px 12px;border-radius:12px;background:var(--soft);margin-top:10px;font-size:13px;color:var(--muted)}
 .s2-blk b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums}
 .s2-blk b.big{font-size:17px}
 .s2-tot{margin-top:18px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 16px}
@@ -71,21 +74,36 @@ html[data-theme=dark] .s2-badge{background:#27392f;color:#d6ece0}
 .scp2 input.sc_ck{width:20px!important;height:20px!important;min-width:20px!important;flex:none!important;margin:1px 0 0!important;padding:0!important}
 .scp2 details{margin:6px 0 0 30px;font-size:13px}.scp2 dl{display:grid;gap:2px;margin:6px 0 0}.scp2 dt{margin-top:6px;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted)}.scp2 dd{margin:0}
 .scp2 textarea{width:100%;min-height:84px}
-@media(max-width:860px){
- .s2-item{padding:12px}
- .s2-offer{grid-template-columns:1fr auto;gap:6px 10px}
+@container (max-width:760px){
+ .s2-offer{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:9px 10px}
  .s2-offer .s2-tx{grid-column:1/-1}
  .s2-offer .s2-oa{grid-column:1/-1;justify-content:flex-start}
- .s2-fields{grid-template-columns:1fr 1fr}
- .s2-a{grid-template-columns:1fr 1fr;gap:8px 12px;padding:10px 0}
+ .s2-fields{grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+ .s2-f>b{min-height:24px;font-size:14px}
+ .s2-f input{min-height:36px;height:36px;font-size:15px}
+ .s2-win{padding:10px}
  .s2-a.h{display:none}
- .s2-a>:first-child{grid-column:1/-1;font-size:14px}
- .s2-a [data-l]::before{content:attr(data-l);display:block}
+ .s2-a{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;padding:8px 0}
+ .s2-a>:first-child{flex:1 0 100%;font-size:14px;font-weight:600}
+ .s2-a>[data-l]{font-size:12px}
+ .s2-a>[data-l]::before{content:attr(data-l) ': ';display:inline;color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;font-weight:400}
+ .s2-a small{display:inline;margin-left:4px}
  .s2-a .r{text-align:left}
- .s2-a .s2-oa{grid-column:1/-1;justify-content:flex-start}
- .s2-blk{justify-content:space-between}
+ .s2-a .s2-oa{margin-left:auto}
+ .s2-blk{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;padding:9px 10px}
+ .s2-blk>span:first-child{grid-column:1/-1}
+ .s2-blk b.big{font-size:16px}
+ .s2-ha button,.s2-oa button{min-width:34px;min-height:34px}
+}
+@media(max-width:560px){
+ .s2-list{grid-template-columns:minmax(0,1fr);gap:10px}
+ .s2-item{padding:11px}
+ .s2-t b{font-size:15px}
  .s2-bar input{flex-basis:100%}
  .s2-bar button{flex:1}
+ .s2-g{margin:16px 0 6px}
+ .s2-tot{grid-template-columns:1fr 1fr;padding:12px;gap:8px 12px}
+ .s2-tot b{font-size:16px}
 }`;
 document.head.appendChild(st);
 
@@ -139,9 +157,16 @@ function splitParts(text){
  return s.split(/[\n;,]+/).map(x=>back(x).trim()).filter(Boolean);
 }
 const typeOfItem=id=>S.types.find(t=>t.title===MARK+id);
-function addonsOf(i){
+function ordersRaw(i){
  const t=typeOfItem(i.id),sids=new Set(t?S.stages.filter(s=>s.typeId===t.id).map(s=>s.id):[]);
  return S.orders.filter(o=>o.itemId===i.id||sids.has(o.stageId));
+}
+const isNote=o=>String(o.title||'').indexOf(NOTE_T)===0;
+const addonsOf=i=>ordersRaw(i).filter(o=>!isNote(o));
+const noteChunks=i=>ordersRaw(i).filter(isNote).sort((a,b)=>Number(String(a.title).slice(3))-Number(String(b.title).slice(3)));
+function noteOf(i){
+ if(typeof i.note==='string'&&i.note)return i.note;
+ return noteChunks(i).map(o=>String(o.note||'')).join('');
 }
 const chosenOf=i=>S.offers.find(o=>o.id===i.chosen&&o.itemId===i.id)||null;
 const encMeta=(i,n)=>(i||n)?META+JSON.stringify({i:i,n:n}):'';
@@ -187,6 +212,8 @@ function itemHtml(i){
  let h='<section class="s2-item"><div class="s2-h"><span class="s2-dot '+stt+'" title="'+(ch?'Компания выбрана':offs.length?'Идёт тендер':'Предложений нет')+'"></span><div class="s2-t"><b>'+esc(i.title)+'</b></div>';
  if(ed)h+='<div class="s2-ha"><button type="button" data-s2="itemRename" data-iid="'+iid+'" title="Переименовать">✎</button><button type="button" class="danger" data-s2="itemDel" data-iid="'+iid+'" title="Удалить позицию">×</button></div>';
  h+='</div>';
+ const nt=noteOf(i);
+ if(ed||nt)h+='<label class="s2-note"><span>Пояснение / заметка</span><textarea class="s2_note" data-iid="'+iid+'" rows="1" maxlength="2000" placeholder="Заметки для себя по этой позиции" '+(ed?'':'readonly')+'>'+esc(nt)+'</textarea></label>';
  if(cm)h+='<details class="s2-hint"><summary>Пояснения к закупке</summary><dl>'+LBL.map((l,k)=>'<dt>'+esc(l)+'</dt><dd>'+esc(cm.r[k+1]||'')+'</dd>').join('')+'</dl></details>';
  const showAll=!ch||S.open[i.id];
  if(ch){
@@ -230,7 +257,7 @@ function html(){
  order.concat(Object.keys(by).filter(k=>order.indexOf(k)<0)).forEach(g=>{
   const list=by[g];if(!list||!list.length)return;
   const done=list.filter(i=>chosenOf(i)).length;
-  h+='<div class="s2-g"><h3>'+esc(g)+'</h3><small>выбрано '+done+' из '+list.length+'</small></div>'+list.map(itemHtml).join('');
+  h+='<div class="s2-g"><h3>'+esc(g)+'</h3><small>выбрано '+done+' из '+list.length+'</small></div><div class="s2-list">'+list.map(itemHtml).join('')+'</div>';
  });
  if(S.items.length){
   const t=totals();
@@ -238,12 +265,16 @@ function html(){
  }
  return h+archive()+'</div>';
 }
+function autosize(){
+ document.querySelectorAll('.s2_note').forEach(t=>{t.style.height='auto';t.style.height=Math.min(Math.max(t.scrollHeight+2,40),260)+'px';});
+}
 function draw(){
  const b=S.box;
  if(!b||!document.body.contains(b))return;
  const a=document.activeElement;
- if(a&&b.contains(a)&&a.classList&&a.classList.contains('s2_in'))return;
+ if(a&&b.contains(a)&&a.classList&&(a.classList.contains('s2_in')||a.classList.contains('s2_note')))return;
  b.innerHTML=html();
+ autosize();
 }
 window.renderSupply=function(box,pid){
  S.box=box;
@@ -261,6 +292,42 @@ async function addTitles(titles){
  if(!list.length){toast('Эти позиции уже добавлены');return 0;}
  for(const t of list)await supplyDo('itemAdd',{title:t.slice(0,200)});
  return list.length;
+}
+async function ensureStage(item){
+ let t=typeOfItem(item.id);
+ if(!t){await supplyDo('typeAdd',{title:MARK+item.id,partner:''});await load();t=typeOfItem(item.id);}
+ if(!t)throw Error('Не удалось создать раздел докупок');
+ let s=S.stages.find(x=>x.typeId===t.id);
+ if(!s){await supplyDo('stageAdd',{typeId:t.id,title:'Докупки',deliveryDate:''});await load();s=S.stages.find(x=>x.typeId===t.id);}
+ if(!s)throw Error('Не удалось создать этап докупок');
+ return s;
+}
+async function saveNote(item,text){
+ text=String(text||'').trim().slice(0,2000);
+ const LSK='sp_note_native';
+ let nat='';
+ try{nat=localStorage.getItem(LSK)||'';}catch(e){}
+ if(!text){
+  for(const o of noteChunks(item))await supplyDo('orderDelete',{id:o.id});
+  if(nat!=='0'){try{await supplyDo('itemEdit',{id:item.id,note:''});}catch(e){}}
+  return;
+ }
+ if(nat!=='0'){
+  try{
+   await supplyDo('itemEdit',{id:item.id,note:text});
+   await load();
+   const it=S.items.find(x=>x.id===item.id);
+   if(it&&String(it.note||'')===text){
+    try{localStorage.setItem(LSK,'1');}catch(e){}
+    for(const o of noteChunks(item))await supplyDo('orderDelete',{id:o.id});
+    return;
+   }
+  }catch(e){}
+  try{localStorage.setItem(LSK,'0');}catch(e){}
+ }
+ for(const o of noteChunks(item))await supplyDo('orderDelete',{id:o.id});
+ const s=await ensureStage(item),parts=text.match(/[\s\S]{1,450}/g)||[];
+ for(let k=0;k<parts.length;k++)await supplyDo('orderAdd',{stageId:s.id,title:NOTE_T+k,note:parts[k],amount:'',discount:'',partner:'',payDate:'',deliveryDate:'',fileUrl:''});
 }
 function picker(){
  const have=S.items.map(i=>i.title.trim().toLowerCase());
@@ -296,20 +363,12 @@ function offerForm(item,offer){
   if(saved&&(info||note)){const g=om(saved);if(g.info!==info||g.note!==note)toast('Сервер сохранил пояснения не полностью. Нужно обновить серверную часть (Code.gs).');}
  });
 }
-async function ensureStage(item){
- let t=typeOfItem(item.id);
- if(!t){await supplyDo('typeAdd',{title:MARK+item.id,partner:''});await load();t=typeOfItem(item.id);}
- if(!t)throw Error('Не удалось создать раздел докупок');
- let s=S.stages.find(x=>x.typeId===t.id);
- if(!s){await supplyDo('stageAdd',{typeId:t.id,title:'Докупки',deliveryDate:''});await load();s=S.stages.find(x=>x.typeId===t.id);}
- if(!s)throw Error('Не удалось создать этап докупок');
- return s;
-}
 function addonForm(item,o){
  const ch=chosenOf(item);
  showForm('<h2>'+(o?'Докупка':'Новая докупка')+'</h2><p class="notice">'+esc(item.title)+(ch?' · '+esc(ch.company):'')+'</p><label>Что докупаем<input id="or_t" maxlength="200" value="'+esc(o?o.title:'')+'" required></label><div class="formgrid"><label>Дата оплаты<input id="or_d" type="date" value="'+esc(o?o.payDate:'')+'"></label><label>Дата доставки<input id="or_v" type="date" value="'+esc(o?o.deliveryDate:'')+'"></label></div><div class="formgrid"><label>Сумма, ₽<input id="or_a" inputmode="decimal" value="'+esc(o?o.amount:'')+'"></label><label>Скидка, ₽<input id="or_s" inputmode="decimal" value="'+esc(o?o.discount:'')+'"></label></div><label>Партнёрские, ₽<input id="or_p" inputmode="decimal" value="'+esc(o?o.partner:'')+'"></label><label>Заметка<input id="or_n" maxlength="500" value="'+esc(o?o.note:'')+'"></label><label>Ссылка на файл (необязательно)<input id="or_u" type="url" maxlength="500" placeholder="https://…" value="'+esc(o?o.fileUrl:'')+'"></label>',async()=>{
   const v=$('or_t').value.trim();
   if(!v)throw Error('Укажите, что докупаем');
+  if(v.indexOf(NOTE_T)===0)throw Error('Название не должно начинаться с «'+NOTE_T+'»');
   const p={title:v,payDate:$('or_d').value,deliveryDate:$('or_v').value,amount:norm($('or_a').value),discount:norm($('or_s').value),partner:norm($('or_p').value),fileUrl:$('or_u').value.trim(),note:$('or_n').value.trim()};
   if(o){p.id=o.id;await supplyDo('orderEdit',p);}
   else{const s=await ensureStage(item);p.stageId=s.id;await supplyDo('orderAdd',p);}
@@ -322,16 +381,19 @@ function printPdf(){
  let n=0;
  const rows=S.items.map(i=>{
   n++;
-  const ch=chosenOf(i);
-  if(!ch)return '<tr><td>'+n+'</td><td>'+esc(i.title)+'</td><td colspan="5">компания не выбрана</td></tr>';
+  const ch=chosenOf(i),nt=noteOf(i);
+  const ntr=nt?'<tr class="n"><td></td><td colspan="6"><b>Пояснение:</b> '+esc(nt).replace(/\n/g,'<br>')+'</td></tr>':'';
+  if(!ch)return '<tr><td>'+n+'</td><td>'+esc(i.title)+'</td><td colspan="5">компания не выбрана</td></tr>'+ntr;
   const a=num(ch.amount),f=i.final===''||i.final===null||i.final===undefined?a:num(i.final);
   let r='<tr><td>'+n+'</td><td>'+esc(i.title)+(i.payDate?' · оплата '+ruD(i.payDate):'')+(i.deliveryDate?' · доставка '+ruD(i.deliveryDate):'')+'</td><td>'+esc(ch.company)+'</td><td class="r">'+money(a)+'</td><td class="r">'+money(a-f)+'</td><td class="r">'+money(f)+'</td><td class="r">'+money(i.partner)+'</td></tr>';
   addonsOf(i).forEach(o=>{r+='<tr class="s"><td></td><td>Докупка: '+esc(o.title)+(o.payDate?' · оплата '+ruD(o.payDate):'')+(o.deliveryDate?' · доставка '+ruD(o.deliveryDate):'')+'</td><td></td><td class="r">'+money(o.amount)+'</td><td class="r">'+money(o.discount)+'</td><td class="r">'+money(num(o.amount)-num(o.discount))+'</td><td class="r">'+money(o.partner)+'</td></tr>';});
-  return r;
+  const m=om(ch);
+  if(m.info||m.note)r+='<tr class="n"><td></td><td colspan="6">'+(m.info?'<b>Информация:</b> '+esc(m.info)+' ':'')+(m.note?'<b>Пояснение к предложению:</b> '+esc(m.note):'')+'</td></tr>';
+  return r+ntr;
  }).join('');
  const w=window.open('','_blank');
  if(!w){toast('Разрешите всплывающие окна для этого сайта');return;}
- w.document.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Комплектация — '+esc(S.name)+'</title><style>body{font:12px/1.4 Arial,Helvetica,sans-serif;color:#111;margin:14mm 10mm}h1{font-size:18px;margin:0 0 4px}.sub{color:#555;margin-bottom:14px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:5px 7px;text-align:left;vertical-align:top}th{background:#eee}td.r,th.r{text-align:right;white-space:nowrap}tfoot td{font-weight:bold;background:#f6f6f6}tr.s td{background:#f1f2f6}@page{size:A4 landscape;margin:10mm}</style></head><body><h1>'+esc(S.name)+'</h1><div class="sub">Комплектация • '+ds+'</div><table><thead><tr><th>№</th><th>Позиция</th><th>Компания</th><th class="r">Смета</th><th class="r">Скидка</th><th class="r">Итого</th><th class="r">Партнёрские</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td colspan="3">Итого</td><td class="r">'+money(t.a)+'</td><td class="r">'+money(t.d)+'</td><td class="r">'+money(t.n)+'</td><td class="r">'+money(t.p)+'</td></tr></tfoot></table></body></html>');
+ w.document.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Комплектация — '+esc(S.name)+'</title><style>body{font:12px/1.4 Arial,Helvetica,sans-serif;color:#111;margin:14mm 10mm}h1{font-size:18px;margin:0 0 4px}.sub{color:#555;margin-bottom:14px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:5px 7px;text-align:left;vertical-align:top}th{background:#eee}td.r,th.r{text-align:right;white-space:nowrap}tfoot td{font-weight:bold;background:#f6f6f6}tr.s td{background:#f1f2f6}tr.n td{background:#fafafa;font-size:11px;color:#333}@page{size:A4 landscape;margin:10mm}</style></head><body><h1>'+esc(S.name)+'</h1><div class="sub">Комплектация • '+ds+'</div><table><thead><tr><th>№</th><th>Позиция</th><th>Компания</th><th class="r">Смета</th><th class="r">Скидка</th><th class="r">Итого</th><th class="r">Партнёрские</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td colspan="3">Итого</td><td class="r">'+money(t.a)+'</td><td class="r">'+money(t.d)+'</td><td class="r">'+money(t.n)+'</td><td class="r">'+money(t.p)+'</td></tr></tfoot></table></body></html>');
  w.document.close();
  setTimeout(()=>{try{w.focus();w.print();}catch(e){}},400);
 }
@@ -352,7 +414,7 @@ document.addEventListener('click',e=>{
  }
  if(a==='itemRename'&&item){const v=prompt('Название позиции',item.title);if(v&&v.trim())run(()=>supplyDo('itemEdit',{id:iid,title:v.trim()}));return;}
  if(a==='itemDel'&&item){
-  if(confirm('Удалить позицию «'+item.title+'», все предложения и докупки?'))run(async()=>{const t=typeOfItem(iid);if(t)await supplyDo('typeDelete',{id:t.id});await supplyDo('itemDelete',{id:iid});});
+  if(confirm('Удалить позицию «'+item.title+'», все предложения, докупки и заметку?'))run(async()=>{const t=typeOfItem(iid);if(t)await supplyDo('typeDelete',{id:t.id});await supplyDo('itemDelete',{id:iid});});
   return;
  }
  if(a==='offerAdd'&&item){offerForm(item,null);return;}
@@ -366,19 +428,36 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{
  const el=e.target;
- if(!el||!el.classList||!el.classList.contains('s2_in')||!S.box||!S.box.contains(el))return;
- const p={id:el.dataset.iid};
- p[el.dataset.k]=(el.dataset.k==='final'||el.dataset.k==='partner')?norm(el.value):el.value;
- el.blur();
- guarded(async()=>{await supplyDo('itemEdit',p);await load();draw();});
+ if(!el||!el.classList||!S.box||!S.box.contains(el))return;
+ if(el.classList.contains('s2_in')){
+  const p={id:el.dataset.iid};
+  p[el.dataset.k]=(el.dataset.k==='final'||el.dataset.k==='partner')?norm(el.value):el.value;
+  el.blur();
+  guarded(async()=>{await supplyDo('itemEdit',p);await load();draw();});
+  return;
+ }
+ if(el.classList.contains('s2_note')){
+  const item=S.items.find(x=>x.id===el.dataset.iid);
+  if(!item)return;
+  const v=el.value;
+  el.blur();
+  if(S.nb)return;
+  S.nb=true;
+  guarded(async()=>{try{await saveNote(item,v);await load();draw();}finally{S.nb=false;}});
+ }
 });
 document.addEventListener('keydown',e=>{
  if(e.key==='Enter'&&e.target&&e.target.id==='s2_new'){e.preventDefault();const b=S.box&&S.box.querySelector('[data-s2=itemAdd]');if(b)b.click();}
 });
 document.addEventListener('input',e=>{
- if(!e.target||e.target.id!=='s2_q')return;
- const q=e.target.value.trim().toLowerCase();
- document.querySelectorAll('.scp2 .sc-it').forEach(r=>{r.style.display=!q||r.dataset.n.indexOf(q)>=0?'':'none';});
+ const t=e.target;
+ if(!t)return;
+ if(t.id==='s2_q'){
+  const q=t.value.trim().toLowerCase();
+  document.querySelectorAll('.scp2 .sc-it').forEach(r=>{r.style.display=!q||r.dataset.n.indexOf(q)>=0?'':'none';});
+  return;
+ }
+ if(t.classList&&t.classList.contains('s2_note')){t.style.height='auto';t.style.height=Math.min(Math.max(t.scrollHeight+2,40),260)+'px';}
 });
 window.studioSupply2={splitParts:splitParts,canon:canon,om:om};
 })();
