@@ -11,6 +11,10 @@ window.STUDIO_API = 'https://script.google.com/macros/s/AKfycbyS2UbVSa_ZYzQ5jf1Z
   var css = document.createElement('style');
   css.textContent = 'html.booting #content,html.booting #nav{visibility:hidden}';
   document.head.appendChild(css);
+  var calm = document.createElement('link');
+  calm.rel = 'stylesheet';
+  calm.href = 'calm.css?v=' + Math.floor(Date.now() / 300000);
+  document.head.appendChild(calm);
   var files = ['features.js', 'members.js', 'touch.js', 'analytics.js', 'work.js', 'plan.js', 'fire.js', 'cal.js', 'ins.js', 'obj.js', 'keep.js', 'web.js', 'drive.js', 'files.js', 'mood.js', 'board.js', 'moodfix.js', 'ganttadd.js', 'supply.js', 'supplycat.js', 'supplyfix.js', 'supplydates.js', 'personal.js', 'sections.js', 'overview.js', 'hier.js', 'mobile.js', 'ui.js', 'final.js', 'harden.js', 'dialog.js', 'branch.js', 'secfix.js', 'newobj.js', 'newobj2.js', 'newobj3.js', 'smr.js', 'tpls.js', 'team.js', 'tplfix.js', 'smrlog.js', 'ganttlink.js', 'pspace.js', 'autoplan.js', 'lib.js', 'queue.js', 'busy.js'];
   var booting = true, pendingState = null, saved = null, finished = false;
   function finish() {

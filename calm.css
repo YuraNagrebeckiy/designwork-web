@@ -1,0 +1,40 @@
+/* Руби 3D Дизайн — спокойная палитра: рубиновый только как акцент (после glass.css, motion.css, supply-ui.css).
+   Убрать смягчение = удалить блок «calm.css» в config.js. */
+
+/* Фон: почти нейтральный, красный оттенок еле заметен */
+body::before{background:
+  radial-gradient(60vmax 45vmax at 8% -8%,rgba(153,23,32,.04),transparent 62%),
+  radial-gradient(55vmax 45vmax at 100% 105%,rgba(120,120,125,.14),transparent 60%),
+  linear-gradient(180deg,#f7f6f5 0%,#eceae9 100%)}
+html[data-theme=dark] body::before{background:
+  radial-gradient(60vmax 45vmax at 8% -8%,rgba(179,32,43,.10),transparent 62%),
+  radial-gradient(55vmax 45vmax at 100% 105%,rgba(110,100,102,.14),transparent 60%),
+  linear-gradient(180deg,#171415 0%,#100e0f 100%)}
+
+/* Главные кнопки: графит вместо сплошного красного */
+html body button.primary{background:#2b2728;color:#fff;border-color:transparent;box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 4px 12px rgba(30,20,22,.18)}
+html body button.primary:hover{background:#3d3738}
+html[data-theme=dark] body button.primary{background:#ece7e6;color:#1d1d1b;box-shadow:none}
+html[data-theme=dark] body button.primary:hover{background:#fff}
+
+/* Переключатели (День/Неделя/Месяц, разделы, каталог): мягкая подсветка вместо красной заливки */
+html body .pscale button.on,html body .libf .seg button.on,html body #content .sectabs button.on,html[data-theme=dark] body #content .sectabs button.on{background:var(--soft);color:var(--accent-text);border-color:color-mix(in srgb,var(--accent) 40%,transparent);font-weight:600}
+
+/* Просрочка и сроки: тонкая тёплая полоска вместо яркой красной и огня */
+html body .card.dl-g,html body .card.dl-y,html body .card.dl-r,html body .card.dl-fire{border-left-width:3px!important}
+html body .card.dl-g{border-left-color:#5aa27f!important}
+html body .card.dl-y{border-left-color:#d1a93a!important}
+html body .card.dl-r{border-left-color:#d9695f!important}
+html body .card.dl-fire{border-left-color:#d4574f!important}
+html body .burn,html body .burn::before{animation:none!important}
+html body .burn::before{display:none!important}
+html body .burn{box-shadow:0 0 0 1px rgba(212,87,79,.35)!important}
+html body .bar.dl-r{background:#c0675d!important}
+html body .bar.dl-fire{background:#a8514b!important}
+html body .overdue{background:color-mix(in srgb,var(--danger) 4%,var(--panel));box-shadow:0 0 0 1px color-mix(in srgb,var(--danger) 18%,transparent),var(--sh-1)}
+
+/* Красное свечение по краям экрана при просрочках: еле заметное */
+html body #redglow{opacity:.18!important}
+
+/* Разделитель личных пространств */
+html body .pdiv{border-top:1px solid var(--line)}
