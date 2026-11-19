@@ -1,4 +1,4 @@
-/* Комплектация на ПК: карточки позиций на всю ширину, данные не сжимаются */
+/* Комплектация на ПК: карточки позиций на всю ширину, данные растянуты по всей ширине блока */
 html body .s2{max-width:none}
 html body .s2-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,960px),1fr))}
 html body .s2-a{grid-template-columns:minmax(200px,1.6fr) 110px 110px 110px 100px 110px 120px auto}
@@ -17,10 +17,13 @@ html body .s2-a{grid-template-columns:minmax(200px,1.6fr) 110px 110px 110px 100p
  html body .s2-a .s2-oa{margin-left:auto}
 }
 @container (min-width:961px){
- html body .s2-fields{grid-template-columns:repeat(auto-fill,minmax(140px,230px))}
+ html body .s2-fields{grid-template-columns:repeat(6,minmax(0,1fr))}
+ html body .s2-blk{justify-content:space-between}
+ html body .s2-win{padding:14px 16px}
 }
 @media(min-width:1500px){
  html body .s2-item{padding:18px 20px}
  html body .s2-t b{font-size:17px}
  html body .s2-fields{gap:14px}
+ html body .s2-offer{grid-template-columns:minmax(0,1.2fr) 150px minmax(0,3fr) auto}
 }
