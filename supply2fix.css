@@ -1,29 +1,46 @@
-/* Комплектация на ПК: карточки позиций на всю ширину, данные растянуты по всей ширине блока */
+/* Комплектация: ПК. Одна колонка на всю ширину, плотная таблица; основная смета и докупки в одних колонках */
 html body .s2{max-width:none}
-html body .s2-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,960px),1fr))}
-html body .s2-a{grid-template-columns:minmax(200px,1.6fr) 110px 110px 110px 100px 110px 120px auto}
-@container (min-width:761px) and (max-width:960px){
- html body .s2-offer{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:9px 10px}
+html body .s2-list{grid-template-columns:minmax(0,1fr);gap:8px}
+html body .s2-g{margin:14px 0 6px}
+html body .s2-item{padding:10px 14px}
+html body .s2-note{margin:6px 0 0}
+html body .s2-note textarea{min-height:34px;padding:6px 10px}
+html body .s2-hint{margin:4px 0 0}
+html body .s2-win{margin-top:8px;padding:8px 12px}
+html body .s2-addh{margin:6px 0 0;justify-content:flex-start}
+html body .s2-a{padding:3px 0;gap:4px 10px;min-height:34px}
+html body .s2-a.h{padding:0;min-height:0}
+html body .s2-a input{width:100%;min-width:0;min-height:30px;height:30px;padding:2px 8px}
+html body .s2-a .r input{text-align:right}
+html body .s2-blk{margin-top:6px;padding:6px 12px}
+html body .s2-blk.s2-sub{margin:6px 0 0;background:color-mix(in srgb,var(--accent,#9b1c2c) 10%,transparent)}
+html body .s2-ft{margin-top:8px}
+html body .s2-tend{margin-top:6px;gap:6px}
+html body .s2-offer{padding:6px 10px}
+html body .s2-tot{margin-top:12px;padding:10px 14px}
+html body .s2-ha button,html body .s2-oa button{min-height:32px}
+@container (min-width:761px) and (max-width:1099px){
+ html body .s2-offer{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:6px 10px}
  html body .s2-offer .s2-tx{grid-column:1/-1}
  html body .s2-offer .s2-oa{grid-column:1/-1;justify-content:flex-start}
- html body .s2-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px}
  html body .s2-a.h{display:none}
- html body .s2-a{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;padding:8px 0}
+ html body .s2-a{display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px}
  html body .s2-a>:first-child{flex:1 0 100%;font-size:14px;font-weight:600}
  html body .s2-a>[data-l]{font-size:12px}
  html body .s2-a>[data-l]::before{content:attr(data-l) ': ';display:inline;color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;font-weight:400}
+ html body .s2-a input{width:130px}
  html body .s2-a small{display:inline;margin-left:4px}
  html body .s2-a .r{text-align:left}
  html body .s2-a .s2-oa{margin-left:auto}
 }
-@container (min-width:961px){
- html body .s2-fields{grid-template-columns:repeat(6,minmax(0,1fr))}
+@container (max-width:760px){
+ html body .s2-a input{width:130px}
+}
+@container (min-width:1100px){
+ html body .s2-a{display:grid;grid-template-columns:minmax(200px,1.6fr) 140px 140px 120px 110px 120px 120px 88px;gap:4px 10px;align-items:center;border-top:1px solid var(--line)}
+ html body .s2-a.h{border-top:0;font-size:11px}
  html body .s2-blk{justify-content:space-between}
- html body .s2-win{padding:14px 16px}
 }
 @media(min-width:1500px){
- html body .s2-item{padding:18px 20px}
  html body .s2-t b{font-size:17px}
- html body .s2-fields{gap:14px}
- html body .s2-offer{grid-template-columns:minmax(0,1.2fr) 150px minmax(0,3fr) auto}
 }
