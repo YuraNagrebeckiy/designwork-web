@@ -4,6 +4,7 @@ if(typeof document==='undefined'||typeof render==='undefined'||typeof state==='u
 const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){}return null;};
 const DEF=()=>matchMedia('(max-width:760px)').matches?160:230;
 const MON=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const RH=34;
 const kindOfT=t=>(typeof window.kindOf==='function')?window.kindOf(t):(t.kind||(t.parentId?'task':'stage'));
 const hol=d=>(window.studioCal&&window.studioCal.kind)?window.studioCal.kind(d):'';
 const gy={on:LS('dwGYear')==='1',year:Number(today().slice(0,4))};
@@ -14,6 +15,32 @@ document.head.appendChild(st);
 function toolbar(){
  if(gy.on)return '<div class="gtb"><button type="button" data-gy="prev" title="Предыдущий год">◀</button><b>'+gy.year+' год</b><button type="button" data-gy="next" title="Следующий год">▶</button><button type="button" data-gy="today">Сегодня</button><button type="button" data-gy="off">Дни</button><span class="gtn">Только этапы и задачи, подзадачи скрыты</span></div>';
  return '<div class="gtb"><button type="button" data-gy="today" title="Сдвинуть график к полосе сегодняшнего дня">Сегодня</button><button type="button" data-gy="on" title="График на год: только этапы и задачи">Год</button></div>';
+}
+function links(rows,pos,w){
+ const idx=new Map();
+ rows.forEach((r,i)=>{const p=pos.get(r.t.id);if(p){p.i=i;idx.set(r.t.id,p);}});
+ let paths='';
+ idx.forEach(c=>{
+  const par=c.t.parentId&&idx.get(c.t.parentId);
+  if(!par||par.i>=c.i)return;
+  const x1=par.l+3,y1=par.i*RH+27,y2=c.i*RH+17,x2=Math.max(c.l,x1+4);
+  paths+='<path d="M '+x1+' '+y1+' V '+y2+' H '+x2+'" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#yar2)"/>';
+ });
+ idx.forEach(b=>{
+  arr(b.t.deps).forEach(did=>{
+   const a=idx.get(did);
+   if(!a)return;
+   const stage=a.k==='stage'&&b.k==='stage';
+   const x1=a.l+a.w,x2=b.l,y1=a.i*RH+17,y2=b.i*RH+17,xm=x1+3;
+   paths+='<path d="M '+x1+' '+y1+' H '+xm+' V '+y2+' H '+Math.max(x2,xm)+'" fill="none" stroke="'+(stage?'#9b6bd3':'var(--muted)')+'" stroke-width="'+(stage?1.8:1.2)+'" marker-end="url(#'+(stage?'yar3':'yar')+')"/>';
+  });
+ });
+ if(!paths)return '';
+ return '<svg class="depsvg" width="'+w+'" height="'+(rows.length*RH)+'" aria-hidden="true"><defs>'
+  +'<marker id="yar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)"/></marker>'
+  +'<marker id="yar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/></marker>'
+  +'<marker id="yar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#9b6bd3"/></marker>'
+  +'</defs>'+paths+'</svg>';
 }
 function yearGantt(root){
  const yr=gy.year,min=yr+'-01-01',max=yr+'-12-31',n=days(min,max)+1,L0=DEF();
@@ -36,14 +63,16 @@ function yearGantt(root){
   i=j+1;
  }
  for(let m=1;m<12;m++)layer+='<div class="hl" style="left:'+(days(min,yr+'-'+String(m+1).padStart(2,'0')+'-01')*DAY)+'px;width:1px;background:var(--line)"></div>';
+ const pos=new Map();
  const body=rows.map(r=>{
   const t=r.t,k=kindOfT(t),a=t.start<min?min:t.start,b=t.end>max?max:t.end,lf=days(min,a)*DAY,wd=Math.max(4,(days(a,b)+1)*DAY);
+  pos.set(t.id,{t:t,k:k,l:lf,w:wd});
   const cls=(t.status==='Готово'?' done':t.status==='Пауза'?' pause':'')+(k==='stage'?' k-stage':'');
   const tt=esc(t.title+' • '+name(t.assigneeId)+' • '+t.start+' — '+t.end);
-  return '<div class="grow" style="height:34px"><div class="glabel" title="'+tt+'" style="padding:6px 8px 6px '+(10+(k==='stage'?0:14))+'px;'+(k==='stage'?'font-weight:700':'')+'">'+esc(t.title)+'</div><div class="track" style="width:'+w+'px;background:none"><button type="button" class="bar'+cls+'" style="top:5px;left:'+lf+'px;width:'+wd+'px" data-action="taskEdit" data-id="'+esc(t.id)+'" title="'+tt+'"><span class="bt">'+(wd>70?esc(t.title):'')+'</span></button></div></div>';
+  return '<div class="grow" style="height:'+RH+'px"><div class="glabel" title="'+tt+'" style="padding:6px 8px 6px '+(10+(k==='stage'?0:14))+'px;'+(k==='stage'?'font-weight:700':'')+'">'+esc(t.title)+'</div><div class="track" style="width:'+w+'px;background:none"><button type="button" class="bar'+cls+'" style="top:5px;left:'+lf+'px;width:'+wd+'px" data-action="taskEdit" data-id="'+esc(t.id)+'" title="'+tt+'"><span class="bt">'+(wd>70?esc(t.title):'')+'</span></button></div></div>';
  }).join('');
  const tl=td>=min&&td<=max?'<div class="todayline" style="left:'+(L0+days(min,td)*DAY)+'px"></div>':'';
- return '<div class="gantt-scroll"><div class="gantt" style="width:'+(L0+w)+'px"><div class="grow ghead"><div class="glabel">Этапы и задачи</div><div class="track" style="width:'+w+'px;background:none">'+head+'</div></div>'+body+'<div class="holl" style="left:'+L0+'px;top:42px;width:'+w+'px">'+layer+'</div>'+tl+'</div></div>'+(rows.length?'':'<p class="notice">В этом году этапов и задач нет.</p>');
+ return '<div class="gantt-scroll"><div class="gantt" style="width:'+(L0+w)+'px"><div class="grow ghead"><div class="glabel">Этапы и задачи</div><div class="track" style="width:'+w+'px;background:none">'+head+'</div></div>'+body+'<div class="holl" style="left:'+L0+'px;top:42px;width:'+w+'px">'+layer+'</div>'+links(rows,pos,w)+tl+'</div></div>'+(rows.length?'<p class="notice">Пунктир — этап и его задачи; сплошная линия со стрелкой — зависимость (окончание → старт), фиолетовая — между этапами.</p>':'<p class="notice">В этом году этапов и задач нет.</p>');
 }
 function center(sc,smooth){
  const tl=sc.querySelector('.todayline'),lab=sc.querySelector('.glabel');
