@@ -43,13 +43,10 @@ function enqueue(t,next){
  if(!old)total++;
  persist();
 }
-async function srvSend(action,payload){
- const r=await transport({action:action,payload:payload,token:token});
+async function bsend(ops){
+ const r=await transport({action:'taskUpdateBatch',payload:{ops:ops},token:token});
  if(!r||!r.ok){const m=String(r&&r.error||'Сервер не ответил');if(m.indexOf('AUTH:')===0)signoutLocal();throw Error(m);}
  return r.data;
-}
-async function bsend(ops){
- return srvSend('taskUpdateBatch',{ops:ops});
 }
 const CONFLICT=/верси|устар|измен|конфликт|version|stale/i;
 async function flush(){
@@ -87,7 +84,7 @@ async function flush(){
      if(again){try{await reload();}catch(x){}}
     }else{
      const b=batch[0];
-     await srvSend('taskUpdate',{id:b.q.id,version:b.cur.version,status:b.q.status});
+     await call('taskUpdate',{id:b.q.id,version:b.cur.version,status:b.q.status});
      Q.delete(b.q.id);sent++;persist();netDown=false;retry=0;
     }
    }catch(e){
