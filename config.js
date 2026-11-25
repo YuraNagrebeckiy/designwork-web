@@ -1,5 +1,6 @@
 // Адрес сервера Google Apps Script (Web App, заканчивается на /exec)
-window.STUDIO_API = 'https://script.google.com/macros/s/AKfycbyS2UbVSa_ZYzQ5jf1ZfERW7j-B9e3bBD-cSgshETuMprVVOoCZE-k2x3f2USWcDV6h/exec';
+// Предыдущий адрес (аккаунт yura.nagrebeckiy), для отката: https://script.google.com/macros/s/AKfycbyS2UbVSa_ZYzQ5jf1ZfERW7j-B9e3bBD-cSgshETuMprVVOoCZE-k2x3f2USWcDV6h/exec
+window.STUDIO_API = 'https://script.google.com/macros/s/AKfycbz-efA9llTBhq7O0p2BMIeFLBKJOWXQplcG66qEu_vGvKX6JQ8GA6qFKfMpGc4AZWqu/exec';
 
 // Быстрая загрузка: модули скачиваются одновременно, выполняются строго по порядку,
 // экран скрыт и показывается один раз, когда всё готово (без промежуточных перерисовок).
