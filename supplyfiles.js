@@ -3,7 +3,7 @@
 if(typeof document==='undefined'||typeof showForm==='undefined'||typeof window.renderSupply!=='function'||!window.DIO)return;
 const D=window.DIO;
 const st=document.createElement('style');
-st.textContent='.sf-btn{display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:3px 10px;border-radius:16px;border:1px solid var(--line);background:var(--panel);color:var(--muted);margin-left:auto}.sf-btn.has{background:var(--accent);border-color:var(--accent);color:#fff}.sf-btn b{font-size:11px}.sf-row{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:6px 0;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}.sf-row .fn{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}.sf-row button,.sf-row a{min-height:36px;padding:5px 10px}';
+st.textContent='.sf-btn{display:inline-flex;align-items:center;gap:4px;min-height:30px;padding:2px 8px;border-radius:16px;border:1px solid var(--line);background:var(--panel);color:var(--muted)}.sf-btn.has{background:var(--accent);border-color:var(--accent);color:#fff}.sf-btn b{font-size:11px}.sf-row{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:6px 0;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}.sf-row .fn{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}.sf-row button,.sf-row a{min-height:36px;padding:5px 10px}';
 document.head.appendChild(st);
 let cur={box:null,pid:''},counts={},busy=false,tid='',files=[];
 const seen=new WeakSet(),orig=window.renderSupply;
@@ -13,18 +13,25 @@ const fmtAt=s=>{const d=new Date(s);return isNaN(d)?'':p2(d.getDate())+'.'+p2(d.
 const msg=t=>{const e=document.getElementById('sf_state');if(e)e.textContent=t;};
 function go(u){const a=document.createElement('a');a.href=u;a.rel='noopener noreferrer';document.body.appendChild(a);a.click();a.remove();}
 function setBtn(b,n){b.classList.toggle('has',n>0);b.innerHTML='📎'+(n?' <b>'+n+'</b>':'');b.title=n?'Файлов: '+n:'Прикрепить файл';}
-function key(iid){return 'supply:'+cur.pid+'#'+iid;}
+function key(k){return 'supply:'+cur.pid+'#'+k;}
 
 function decorate(box){
  box.querySelectorAll('.s2-item').forEach(it=>{
-  if(it.querySelector('.sf-btn'))return;
-  const e=it.querySelector('[data-iid]'),h=it.querySelector('.s2-h'),t=it.querySelector('.s2-t b');
-  if(!e||!h)return;
-  const b=document.createElement('button');
-  b.type='button';b.className='sf-btn';b.dataset.sfi=e.dataset.iid;b.dataset.t=t?t.textContent:'';
-  b.setAttribute('aria-label','Файлы позиции');
-  setBtn(b,counts[key(e.dataset.iid)]||0);
-  h.appendChild(b);
+  const t=it.querySelector('.s2-t b'),tt=t?t.textContent:'';
+  it.querySelectorAll('.s2-a').forEach(row=>{
+   if(row.classList.contains('h')||row.querySelector('.sf-btn'))return;
+   let k='';
+   if(row.classList.contains('m')){const e=row.querySelector('[data-iid]');if(e)k=e.dataset.iid+'-m';}
+   else{const e=row.querySelector('[data-rid]');if(e)k=e.dataset.rid;}
+   const first=row.firstElementChild,last=row.lastElementChild;
+   if(!k||!first||!last)return;
+   const lbl=((first.firstChild&&first.firstChild.textContent)||'').trim();
+   const b=document.createElement('button');
+   b.type='button';b.className='sf-btn';b.dataset.sfi=k;b.dataset.t=tt+(lbl?' · '+lbl:'');
+   b.setAttribute('aria-label','Файлы строки');
+   setBtn(b,counts[key(k)]||0);
+   last.appendChild(b);
+  });
  });
 }
 function watch(box){
@@ -77,9 +84,9 @@ async function refresh(){
  }catch(e){box.innerHTML=`<p class='error'>${esc(e.message||String(e))}</p>`;}
 }
 
-function openDlg(iid,title){
- tid=key(iid);files=[];busy=false;
- showForm(`<h2>Файлы позиции</h2><p class='notice'>${esc(title)}</p><div id='sf_list'><p class='notice'>Загрузка…</p></div><p class='notice' id='sf_state'></p><div id='sf_add'></div>`,async()=>{});
+function openDlg(k,title){
+ tid=key(k);files=[];busy=false;
+ showForm(`<h2>Файлы строки сметы</h2><p class='notice'>${esc(title)}</p><div id='sf_list'><p class='notice'>Загрузка…</p></div><p class='notice' id='sf_state'></p><div id='sf_add'></div>`,async()=>{});
  const ft=document.getElementById('editform').querySelector('.footer');
  if(ft)ft.innerHTML=`<button type='button' data-action='close'>Закрыть</button>`;
  refresh();
