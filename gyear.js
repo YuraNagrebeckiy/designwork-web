@@ -46,7 +46,8 @@ function yearGantt(root){
  const yr=gy.year,min=yr+'-01-01',max=yr+'-12-31',n=days(min,max)+1,L0=DEF();
  const W=Math.max(600,root.clientWidth||document.getElementById('content').clientWidth||1000);
  const DAY=Math.max(2.4,(W-L0-24)/n),w=n*DAY,td=today();
- const ts=state.tasks.filter(t=>t.projectId===projectId&&t.end>=min&&t.start<=max);
+ const all=(typeof window.secFilter==='function')?window.secFilter(state.tasks):state.tasks;
+ const ts=all.filter(t=>t.projectId===projectId&&t.end>=min&&t.start<=max);
  const rows=tree(ts).filter(r=>kindOfT(r.t)!=='sub');
  let head='';
  for(let m=0;m<12;m++){
@@ -85,6 +86,7 @@ function key(){return (view==='projects'&&projectId)?'p:'+projectId+(gy.on?':y'+
 function decorate(pos){
  const root=document.getElementById('ganttRoot');
  if(!root||!state||view!=='projects'||!projectId){lastKey='';return;}
+ if(document.querySelector('.sectabs button.on[data-sec="supply"]')){lastKey='';return;}
  if(gy.on)root.innerHTML=toolbar()+yearGantt(root);
  else root.insertAdjacentHTML('afterbegin',toolbar());
  const k=key(),same=!!pos&&k===lastKey;
