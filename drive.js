@@ -44,22 +44,6 @@ function put(loc,blob,start,total,prog){
  });
 }
 
-function putWhole(loc,file,prog){
- return new Promise((resolve,reject)=>{
-  const x=new XMLHttpRequest();
-  x.open('PUT',loc);
-  x.timeout=3600000;
-  x.upload.onprogress=e=>{if(e.lengthComputable)prog(Math.min(100,Math.round(e.loaded*100/e.total)));};
-  x.onload=()=>{
-   if(x.status===200||x.status===201||x.status===202){resolve();return;}
-   reject(Error('Яндекс Диск не принял файл (HTTP '+x.status+')'));
-  };
-  x.onerror=()=>reject(Error('NET'));
-  x.ontimeout=()=>reject(Error('Загрузка слишком долгая. Повторите.'));
-  x.send(file);
- });
-}
-
 async function direct(s,file,onp){
  let off=0,size=8*MB,id='';
  const pr=b=>onp(Math.min(100,Math.round(b*100/file.size)));
@@ -103,24 +87,9 @@ async function proxy(s,file,onp){
  return driveId;
 }
 
-async function uploadYandex(s,file,onp){
- try{await putWhole(s.loc,file,onp);}
- catch(e){
-  if(e.message!=='NET')throw e;
-  if(file.size>24*MB)throw Error('Не удалось отправить файл на Яндекс Диск напрямую, а через сервер можно только до 24 МБ');
-  const r=await fcall('fileChunk',{upId:s.upId,offset:0,data:b64(await file.arrayBuffer())},300000);
-  onp(100);
-  return r.driveId;
- }
- const r=await fcall('fileFinish',{upId:s.upId},60000);
- onp(100);
- return r.driveId;
-}
-
 async function upload(taskId,file,onp){
  const s=await fcall('fileStart',{taskId:taskId,name:file.name,mime:file.type||'application/octet-stream',size:file.size},60000);
  if(s.done)return s.driveId;
- if(s.yandex)return await uploadYandex(s,file,onp);
  let useDirect=!!s.direct,id='';
  if(useDirect){
   try{id=await direct(s,file,onp);}
