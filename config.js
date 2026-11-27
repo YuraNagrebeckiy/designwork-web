@@ -4,7 +4,7 @@ window.STUDIO_API = 'https://script.google.com/macros/s/AKfycbyS2UbVSa_ZYzQ5jf1Z
 // Быстрая загрузка: модули скачиваются одновременно, выполняются строго по порядку,
 // экран скрыт и показывается один раз, когда всё готово (без промежуточных перерисовок).
 // Порядок: features, members, touch, analyticsfit (обёртка над analytics), work, plan, fire, cal, ins, obj, keep, web, drive, files, mood, board,
-// moodfix, ganttadd, supply, supplycat, supplyfix, supplydates, supply2x (патч поверх supply2), supplyfiles (файлы в комплектации), personal, sections, overview, hier, mobile, ui, final, harden, dialog, branch, secfix, newobj, newobj2, newobj3, smr, tpls, team, tplfix, smrlog, ganttlink, pspace, donechk, autoplan, dayadd, carry, gyear, gyedit, gtools, palette, lib, queue, busy, busyfix, gfold, team2, roles2, guide.
+// moodfix, ganttadd, supply, supplycat, supplyfix, supplydates, supply2x (патч поверх supply2), supplyfiles (файлы в комплектации), personal, sections, overview, hier, mobile, ui, final, harden, dialog, branch, secfix, newobj, newobj2, newobj3, smr, tpls, team, tplfix, smrlog, ganttlink, pspace, objtag (объект в скобках в «Моих задачах»), donechk, autoplan, dayadd, carry, gyear, gyedit, gtools, palette, lib, queue, busy, busyfix, gfold, team2, roles2, guide.
 (function () {
   var root = document.documentElement;
   root.classList.add('booting');
@@ -19,7 +19,7 @@ window.STUDIO_API = 'https://script.google.com/macros/s/AKfycbyS2UbVSa_ZYzQ5jf1Z
   fix.rel = 'stylesheet';
   fix.href = 'supply2fix.css?v=' + Math.floor(Date.now() / 300000);
   document.head.appendChild(fix);
-  var files = ['features.js', 'members.js', 'touch.js', 'analyticsfit.js', 'work.js', 'plan.js', 'fire.js', 'cal.js', 'ins.js', 'obj.js', 'keep.js', 'web.js', 'drive.js', 'files.js', 'mood.js', 'board.js', 'moodfix.js', 'ganttadd.js', 'supply.js', 'supplycat.js', 'supplyfix.js', 'supplydates.js', 'supply2x.js', 'supplyfiles.js', 'personal.js', 'sections.js', 'overview.js', 'hier.js', 'mobile.js', 'ui.js', 'final.js', 'harden.js', 'dialog.js', 'branch.js', 'secfix.js', 'newobj.js', 'newobj2.js', 'newobj3.js', 'smr.js', 'tpls.js', 'team.js', 'tplfix.js', 'smrlog.js', 'ganttlink.js', 'pspace.js', 'donechk.js', 'autoplan.js', 'dayadd.js', 'carry.js', 'gyear.js', 'gyedit.js', 'gtools.js', 'palette.js', 'lib.js', 'queue.js', 'busy.js', 'busyfix.js', 'gfold.js', 'team2.js', 'roles2.js', 'guide.js'];
+  var files = ['features.js', 'members.js', 'touch.js', 'analyticsfit.js', 'work.js', 'plan.js', 'fire.js', 'cal.js', 'ins.js', 'obj.js', 'keep.js', 'web.js', 'drive.js', 'files.js', 'mood.js', 'board.js', 'moodfix.js', 'ganttadd.js', 'supply.js', 'supplycat.js', 'supplyfix.js', 'supplydates.js', 'supply2x.js', 'supplyfiles.js', 'personal.js', 'sections.js', 'overview.js', 'hier.js', 'mobile.js', 'ui.js', 'final.js', 'harden.js', 'dialog.js', 'branch.js', 'secfix.js', 'newobj.js', 'newobj2.js', 'newobj3.js', 'smr.js', 'tpls.js', 'team.js', 'tplfix.js', 'smrlog.js', 'ganttlink.js', 'pspace.js', 'objtag.js', 'donechk.js', 'autoplan.js', 'dayadd.js', 'carry.js', 'gyear.js', 'gyedit.js', 'gtools.js', 'palette.js', 'lib.js', 'queue.js', 'busy.js', 'busyfix.js', 'gfold.js', 'team2.js', 'roles2.js', 'guide.js'];
   var booting = true, pendingState = null, saved = null, finished = false;
   function finish() {
     if (finished) return;
