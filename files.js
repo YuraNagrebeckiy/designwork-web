@@ -44,7 +44,7 @@ function listHtml(){
 }
 
 function addHtml(){
- return `<h3>Добавить</h3><label>Файл с устройства (размер не ограничен, грузится прямо на Google Диск)<input id='fl_file' type='file' multiple></label><label>Или ссылка на готовый файл (Google Диск и другое)<input id='fl_url' type='url' placeholder='https://drive.google.com/…' maxlength='1000'></label><label>Название ссылки (необязательно)<input id='fl_lname' maxlength='150'></label><button type='button' id='fl_addlink'>Добавить ссылку</button><p class='notice'>Чтобы коллеги открыли ссылку, у них должен быть доступ к этому файлу в Google.</p>`;
+ return `<h3>Добавить</h3><label>Файл с устройства (размер не ограничен, грузится прямо на Диск)<input id='fl_file' type='file' multiple></label><label>Или ссылка на готовый файл<input id='fl_url' type='url' placeholder='https://…' maxlength='1000'></label><label>Название ссылки (необязательно)<input id='fl_lname' maxlength='150'></label><button type='button' id='fl_addlink'>Добавить ссылку</button><p class='notice'>Чтобы коллеги открыли ссылку, у них должен быть доступ к этому файлу.</p>`;
 }
 
 function clipHtml(n){return SVG+(n?`<b>${n}</b>`:'');}
@@ -79,7 +79,7 @@ async function refresh(){
   if(add&&!add.dataset.ready){
    add.dataset.ready='1';
    add.innerHTML=d.canAdd?addHtml():`<p class='notice'>Наблюдатели могут только просматривать и скачивать.</p>`;
-   if(d.folderUrl&&String(d.folderUrl).indexOf('https://')===0)add.insertAdjacentHTML('beforeend',`<p><a class='btnlike' href='${esc(d.folderUrl)}' target='_blank' rel='noopener noreferrer'>Открыть папку на Google Диске</a></p>`);
+   if(d.folderUrl&&String(d.folderUrl).indexOf('https://')===0)add.insertAdjacentHTML('beforeend',`<p><a class='btnlike' href='${esc(d.folderUrl)}' target='_blank' rel='noopener noreferrer'>Открыть папку на Диске</a></p>`);
   }
   setClip(cur,files.length);
  }catch(e){

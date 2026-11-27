@@ -44,7 +44,7 @@ function put(loc,blob,start,total,prog){
  });
 }
 
-/* Яндекс Диск: весь файл одним PUT на временный адрес, который выдал сервер. Токен в браузер не попадает. */
+/* Диск: весь файл одним PUT на временный адрес, который выдал сервер. Токен в браузер не попадает. */
 function putYd(loc,file,prog){
  return new Promise((resolve,reject)=>{
   const x=new XMLHttpRequest();
@@ -53,7 +53,7 @@ function putYd(loc,file,prog){
   x.upload.onprogress=e=>{if(e.lengthComputable)prog(e.loaded);};
   x.onload=()=>{
    if(x.status===200||x.status===201||x.status===202){resolve();return;}
-   const e=Error(x.status===413?'Файл слишком большой для тарифа Яндекс Диска':x.status===507?'На Яндекс Диске не хватает места':'Яндекс Диск не принял файл (HTTP '+x.status+')');
+   const e=Error(x.status===413?'Файл слишком большой для тарифа Диска':x.status===507?'На Диске не хватает места':'Диск не принял файл (HTTP '+x.status+')');
    e.retry=x.status>=500&&x.status!==507;
    reject(e);
   };
@@ -69,7 +69,7 @@ async function uploadYd(s,file,onp){
   try{await putYd(s.loc,file,pr);err=null;break;}
   catch(e){
    err=e;
-   if(e.message==='NODIRECT')throw Error('Браузер не дал загрузить файл напрямую на Яндекс Диск (сеть или CORS). Попробуйте ещё раз, если не помогает — сообщите администратору.');
+   if(e.message==='NODIRECT')throw Error('Браузер не дал загрузить файл напрямую на Диск (сеть или CORS). Попробуйте ещё раз, если не помогает — сообщите администратору.');
    if(!e.retry)throw e;
    await sleep(2000);
   }
