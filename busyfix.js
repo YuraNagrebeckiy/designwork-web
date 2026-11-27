@@ -11,7 +11,7 @@ try{
  }).catch(()=>{});
 }catch(e){}
 const st=document.createElement('style');
-st.textContent='#busybar[popover],#factbar{position:fixed;inset:auto;bottom:auto;height:auto;width:auto;overflow:visible;margin:0 auto;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top));max-width:400px}#busybar[data-c="1"] .fact,#factbar[data-c="1"] .fact{display:none!important}#factbar{z-index:2147483000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:14px;padding:10px 14px;box-shadow:0 8px 26px #0005;font-size:13px;display:none;pointer-events:none}#factbar.on{display:block}#factbar .bh{display:flex;align-items:center;gap:12px}#factbar .sp{perspective:300px;flex:none;width:44px;height:40px}#factbar .sp svg{width:44px;height:40px;animation:lgspin 1.4s linear infinite}#factbar .bh b{font-size:14px}#factbar .fact{margin-top:8px;padding-top:7px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.35}#factbar .fact b{color:var(--ink)}@media (prefers-reduced-motion:reduce){#factbar .sp svg{animation:none}}';
+st.textContent='#busybar[popover],#factbar{position:fixed;inset:auto;bottom:auto;height:auto;width:auto;overflow:visible;margin:0 auto;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top));max-width:400px}#busybar .fact,#factbar .fact{display:block!important}#factbar{z-index:2147483000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:14px;padding:10px 14px;box-shadow:0 8px 26px #0005;font-size:13px;display:none;pointer-events:none}#factbar.on{display:block}#factbar .bh{display:flex;align-items:center;gap:12px}#factbar .sp{perspective:300px;flex:none;width:44px;height:40px}#factbar .sp svg{width:44px;height:40px;animation:lgspin 1.4s linear infinite}#factbar .bh b{font-size:14px}#factbar .fact{margin-top:8px;padding-top:7px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.35}#factbar .fact b{color:var(--ink)}@media (prefers-reduced-motion:reduce){#factbar .sp svg{animation:none}}';
 document.head.appendChild(st);
 if(bb&&POP)bb.setAttribute('popover','manual');
 const fb=document.createElement('div');
@@ -37,15 +37,14 @@ transport=async function(req){
  finally{if(j){pend=pend.filter(x=>x!==j);lastEnd=Date.now();}}
 };
 const dlg=()=>document.getElementById('dialog');
+const esc2=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+/* Плашка всегда с фактом: сначала ищем место рядом, если его нет — показываем сверху поверх экрана. */
 function place(el){
  el.dataset.c='';el.style.top='';el.style.left='';el.style.right='';el.style.margin='';el.style.width='';
  const d=dlg();
  if(d&&d.open){
-  const r=d.getBoundingClientRect();
-  let h=el.offsetHeight;
+  const r=d.getBoundingClientRect(),h=el.offsetHeight;
   if(!h||r.top>=h+16)return;
-  el.dataset.c='1';h=el.offsetHeight;
-  if(r.top>=h+16)return;
   if(innerHeight-r.bottom>=h+16)el.style.top=(r.bottom+8)+'px';
   return;
  }
@@ -58,7 +57,7 @@ function place(el){
  const lim=tl?tl.getBoundingClientRect().left:innerWidth,w=Math.min(400,lim-x-32);
  if(w<260)return;
  el.style.left=(x+16)+'px';el.style.right='auto';el.style.margin='0';el.style.width=w+'px';
- if(hd&&el.offsetHeight>hd.getBoundingClientRect().bottom-10)el.dataset.c='1';
+ if(hd&&el.offsetHeight>hd.getBoundingClientRect().bottom-10){el.style.left='';el.style.right='';el.style.margin='';el.style.width='';}
 }
 function sync(el,on){
  if(!POP)return;
@@ -71,7 +70,11 @@ function tick(){
  if(bb){
   const on=bb.classList.contains('on');
   sync(bb,on);
-  if(on)place(bb);
+  if(on){
+   const f=bb.querySelector('.fact');
+   if(f&&!f.textContent)f.innerHTML='<b>Знаете ли вы?</b> '+esc2(FACTS[factI]);
+   place(bb);
+  }
  }
  const own=!!(d&&d.open&&d.querySelector('.nbp'));
  const busyOn=!!(bb&&bb.classList.contains('on'));
@@ -80,7 +83,7 @@ function tick(){
  if(want){
   if(!fb.classList.contains('on')){fb.classList.add('on');factAt=0;}
   fT.textContent=pend.length?pend[0].label+'…':own?'Идёт сохранение…':'Готово';
-  if(now-factAt>8000){if(factAt)factI=(factI+1)%FACTS.length;factAt=now;fF.innerHTML='<b>Знаете ли вы?</b> '+FACTS[factI].replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+  if(now-factAt>8000){if(factAt)factI=(factI+1)%FACTS.length;factAt=now;fF.innerHTML='<b>Знаете ли вы?</b> '+esc2(FACTS[factI]);}
   sync(fb,true);
   place(fb);
  }else{
