@@ -49,21 +49,28 @@ function fixForm(){
   document.querySelectorAll('#editform [data-action="projectDelete"]').forEach(b=>{const p=b.closest('p');(p||b).remove();});
  }
 }
-function addForemen(p){
+function addStaff(p){
  if(typeof admin==='function'&&!admin())return;
- const fms=(state.users||[]).filter(u=>u.role==='foreman'&&u.approved==='true');
- if(!fms.length)return;
  const first=document.querySelector('#editform input[name="p_members"]'),box=first&&first.closest('.pick');
  if(!box)return;
  const sel=(p&&p.members&&typeof arr==='function')?arr(p.members):[];
- fms.forEach(u=>{
-  if(box.querySelector('input[value="'+u.id+'"]'))return;
-  const l=document.createElement('label');
-  l.className='check';
-  const i=document.createElement('input');i.type='checkbox';i.name='p_members';i.value=u.id;i.checked=sel.indexOf(u.id)>=0;
-  const sp=document.createElement('span');sp.textContent=u.name+' ';
-  const sm=document.createElement('small');sm.textContent='Прораб';sp.appendChild(sm);
-  l.appendChild(i);l.appendChild(sp);box.appendChild(l);
+ const staff=(state.users||[]).filter(u=>u.approved==='true'&&!u.excluded&&['admin','manager','foreman'].indexOf(real(u))>=0);
+ staff.sort((a,b)=>['admin','manager','foreman'].indexOf(real(b))-['admin','manager','foreman'].indexOf(real(a)));
+ staff.forEach(u=>{
+  const r=real(u);
+  let i=box.querySelector('input[value="'+u.id+'"]');
+  if(!i){
+   const l=document.createElement('label');
+   l.className='check';
+   i=document.createElement('input');i.type='checkbox';i.name='p_members';i.value=u.id;i.checked=sel.indexOf(u.id)>=0;
+   const sp=document.createElement('span');sp.appendChild(document.createTextNode(u.name+' '));
+   const sm=document.createElement('small');sm.textContent=LAB[r]||r;sp.appendChild(sm);
+   l.appendChild(i);l.appendChild(sp);
+   if(r==='foreman')box.appendChild(l);else box.insertBefore(l,box.firstChild);
+  }else{
+   const sm=i.closest('label').querySelector('small');
+   if(sm)sm.textContent=LAB[r]||r;
+  }
  });
 }
 if(typeof canEdit==='function'){
@@ -92,7 +99,7 @@ const oUF=userForm;
 userForm=function(u){lastUser=u;return oUF.apply(this,arguments);};
 if(typeof projectForm==='function'){
  const oPF=projectForm;
- projectForm=function(p){const r=oPF.apply(this,arguments);try{addForemen(p);}catch(e){}return r;};
+ projectForm=function(p){const r=oPF.apply(this,arguments);try{addStaff(p);}catch(e){}return r;};
 }
 if(state)try{render();}catch(e){}
 })();
