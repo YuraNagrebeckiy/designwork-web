@@ -178,6 +178,18 @@ function enhance(t,parent,pre){
  const paintSeg=()=>kl.querySelectorAll('[data-kseg]').forEach(b=>b.classList.toggle('on',b.dataset.kseg===$('f_kind').value));
  paintSeg();
  const pl=$('f_parent').closest('label'),dl=$('f_deps').closest('label'),ll=$('f_lag')?$('f_lag').closest('label'):null,h=dlg.querySelector('h2');
+ const nd=document.createElement('label');
+ nd.className='check';
+ nd.innerHTML='<input type="checkbox" id="f_nodeps"> Не зависит от других этапов (не ждёт окончания предыдущего)';
+ dl.parentNode.insertBefore(nd,dl);
+ const ndc=nd.querySelector('input');
+ const syncNd=()=>{
+  const stg=$('f_kind').value==='stage',off=stg&&ndc.checked;
+  nd.style.display=stg?'':'none';
+  $('f_deps').disabled=off;
+  dl.style.display=off?'none':'';
+  if(ll)ll.style.display=off?'none':'';
+ };
  const ban=new Set(t?[t.id].concat(kids(t.id).map(x=>x.id)):[]);
  const setText=(l,s)=>{if(l&&l.firstChild&&l.firstChild.nodeType===3)l.firstChild.textContent=s;};
  const curDeps=()=>[...$('f_deps').selectedOptions].map(o=>o.value);
@@ -197,6 +209,8 @@ function enhance(t,parent,pre){
   $('f_deps').innerHTML=list.filter(x=>kindOf(x,by)===k).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.title)+'</option>').join('');
   [...$('f_deps').options].forEach(o=>{o.selected=depSel.indexOf(o.value)>=0;});
   setText(ll,'Пауза после предыдущего, дней');
+  if(k==='stage')ndc.checked=depSel.length===0;
+  syncNd();
  }
  const snap=()=>{
   const par=by.get(chosen);
@@ -218,6 +232,14 @@ function enhance(t,parent,pre){
   $('f_kind').value=b.dataset.kseg;
   refresh();
  });
+ ndc.onchange=()=>{
+  if(ndc.checked){
+   depSel=[];
+   [...$('f_deps').options].forEach(o=>{o.selected=false;});
+   if($('f_lag'))$('f_lag').value='0';
+  }
+  syncNd();
+ };
  $('f_parent').onchange=()=>{chosen=$('f_parent').value;snap();};
  $('f_deps').onchange=()=>{depSel=curDeps();};
  $('f_project').addEventListener('change',()=>{chosen='';depSel=[];refresh();});
