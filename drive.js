@@ -44,6 +44,42 @@ function put(loc,blob,start,total,prog){
  });
 }
 
+/* Яндекс Диск: весь файл одним PUT на временный адрес, который выдал сервер. Токен в браузер не попадает. */
+function putYd(loc,file,prog){
+ return new Promise((resolve,reject)=>{
+  const x=new XMLHttpRequest();
+  x.open('PUT',loc);
+  x.timeout=0;
+  x.upload.onprogress=e=>{if(e.lengthComputable)prog(e.loaded);};
+  x.onload=()=>{
+   if(x.status===200||x.status===201||x.status===202){resolve();return;}
+   const e=Error(x.status===413?'Файл слишком большой для тарифа Яндекс Диска':x.status===507?'На Яндекс Диске не хватает места':'Яндекс Диск не принял файл (HTTP '+x.status+')');
+   e.retry=x.status>=500&&x.status!==507;
+   reject(e);
+  };
+  x.onerror=()=>reject(Error('NODIRECT'));
+  x.send(file);
+ });
+}
+
+async function uploadYd(s,file,onp){
+ const pr=b=>onp(Math.min(99,Math.round(b*100/(file.size||1))));
+ let err=null;
+ for(let k=0;k<2;k++){
+  try{await putYd(s.loc,file,pr);err=null;break;}
+  catch(e){
+   err=e;
+   if(e.message==='NODIRECT')throw Error('Браузер не дал загрузить файл напрямую на Яндекс Диск (сеть или CORS). Попробуйте ещё раз, если не помогает — сообщите администратору.');
+   if(!e.retry)throw e;
+   await sleep(2000);
+  }
+ }
+ if(err)throw err;
+ onp(100);
+ const r=await fcall('fileFinish',{upId:s.upId,driveId:''},90000);
+ return r.driveId||r.id||'';
+}
+
 async function direct(s,file,onp){
  let off=0,size=8*MB,id='';
  const pr=b=>onp(Math.min(100,Math.round(b*100/file.size)));
@@ -90,6 +126,7 @@ async function proxy(s,file,onp){
 async function upload(taskId,file,onp){
  const s=await fcall('fileStart',{taskId:taskId,name:file.name,mime:file.type||'application/octet-stream',size:file.size},60000);
  if(s.done)return s.driveId;
+ if(s.yd)return await uploadYd(s,file,onp);
  let useDirect=!!s.direct,id='';
  if(useDirect){
   try{id=await direct(s,file,onp);}
